@@ -15,3 +15,13 @@ test('SQS Queue Created', () => {
 //     VisibilityTimeout: 300
 //   });
 });
+
+test('DynamoDB Table Created', () => {
+//   const app = new cdk.App();
+//   const stack = new Team4Project.Team4ProjectStack(app, 'MyTestStack');
+//   const template = Template.fromStack(stack);
+
+//   template.hasResourceProperties('AWS::DynamoDB::Table', {
+//     BillingMode: 'PAY_PER_REQUEST',
+//   });
+});
