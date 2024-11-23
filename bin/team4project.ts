@@ -1,7 +1,8 @@
 #!/usr/bin/env node
+
 import 'source-map-support/register';
 import * as cdk from 'aws-cdk-lib';
-import { Team4ProjectStack } from '../lib/team4project-stack';
+import { Team4ProjectStack } from '../lib/t4chat-stack';
 
 const app = new cdk.App();
 new Team4ProjectStack(app, 'Team4ProjectStack', {
