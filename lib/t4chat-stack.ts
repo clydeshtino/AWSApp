@@ -12,7 +12,6 @@ import { DynamoDbDataSource } from 'aws-cdk-lib/aws-appsync';
 export class Team4ProjectStack extends cdk.Stack {
   constructor(scope: Construct, id: string, props ? : cdk.StackProps) {
     super(scope, id, props);
-
     /* 
      * chat service
      */
@@ -49,6 +48,7 @@ export class Team4ProjectStack extends cdk.Stack {
     });
 
     messagesTable.grantReadWriteData(dbWrapperLambdaFunction);
+    
     /* 
      * sqs queue
      */
@@ -73,17 +73,23 @@ export class Team4ProjectStack extends cdk.Stack {
     // Define ChatServiceLambda Lambda function resource
     const chatPullWorkerLambdaFunction = new NodejsFunction(this, 'pullworker-lambda', {
       runtime: lambda.Runtime.NODEJS_20_X,
+      entry: 'lib/t4chat-stack.pullworker-lambda.ts',
       events: [new eventsources.SqsEventSource(chatMessageQueue, {
         batchSize: 1
       })],
       handler: 'handler',
+      environment: {
+        WRAPPER_LAMBDA_NAME: dbWrapperLambdaFunction.functionName,
+      },  
       role: new iam.Role(this, 'ChatMessageQueueExecutionRole', {
         roleName: 'ChatMessageQueueExecutionRole',
         assumedBy: new iam.ServicePrincipal('lambda.amazonaws.com'),
         managedPolicies: [
           iam.ManagedPolicy.fromAwsManagedPolicyName("service-role/AWSLambdaSQSQueueExecutionRole"),
+          iam.ManagedPolicy.fromAwsManagedPolicyName("service-role/AWSLambdaBasicExecutionRole"),
         ]
       }),
     });
+    dbWrapperLambdaFunction.grantInvoke(chatPullWorkerLambdaFunction);
   }
 }
