@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Cloud Computing Group 4</title>
+    <link rel="stylesheet" href="Styles/Centered.css" />
+  </head>
+  <body>
+    <div class="container">
+      <!-- Enter Message Form -->
+      <div class="formDiv">
+        <div>
+          <div class="formTitle">Post a message:</div>
+        </div>
+        <form id="form" class="form">
+          <div>
+            <input
+              id="title"
+              name="title"
+              class="titleInputBox"
+              type="text"
+              placeholder="Enter post title here"
+              maxlength="128"
+              required
+            />
+          </div>
+          <div>
+            <textarea
+              id="message"
+              name="message"
+              class="messageInputBox"
+              required
+            ></textarea>
+          </div>
+          <div>
+            <input type="submit" value="Post" class="submitButton" />
+          </div>
+        </form>
+      </div>
+
+      <!-- Message List -->
+      <div name="content" id="content" class="content"></div>
+    </div>
+
+    <script src="DisplayPostOnSubmit.js"></script>
+  </body>
+</html>
