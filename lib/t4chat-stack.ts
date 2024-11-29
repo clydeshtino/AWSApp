@@ -2,25 +2,82 @@ import * as apigateway from 'aws-cdk-lib/aws-apigateway';
 import * as cdk from 'aws-cdk-lib';
 import * as lambda from 'aws-cdk-lib/aws-lambda';
 import * as sqs from 'aws-cdk-lib/aws-sqs';
+import * as s3 from 'aws-cdk-lib/aws-s3';
+import * as s3deploy from 'aws-cdk-lib/aws-s3-deployment';
 import * as iam from 'aws-cdk-lib/aws-iam'
 import * as eventsources from 'aws-cdk-lib/aws-lambda-event-sources';
 import * as dynamodb from 'aws-cdk-lib/aws-dynamodb';
+import * as cloudfront from 'aws-cdk-lib/aws-cloudfront';
+import * as cloudfront_origins from 'aws-cdk-lib/aws-cloudfront-origins';
+import * as path from "path";
+import { CfnOutput, Duration, RemovalPolicy, Stack } from 'aws-cdk-lib';
 import { NodejsFunction } from 'aws-cdk-lib/aws-lambda-nodejs';
 import { Construct } from 'constructs';
 import { DynamoDbDataSource } from 'aws-cdk-lib/aws-appsync';
+import { Bucket, BucketAccessControl } from "aws-cdk-lib/aws-s3";
+import { BucketDeployment, Source } from "aws-cdk-lib/aws-s3-deployment";
+import { Distribution, OriginAccessIdentity } from "aws-cdk-lib/aws-cloudfront";
+import { S3Origin } from "aws-cdk-lib/aws-cloudfront-origins";
 
 export class Team4ProjectStack extends cdk.Stack {
   constructor(scope: Construct, id: string, props ? : cdk.StackProps) {
     super(scope, id, props);
-    /* 
-     * chat service
+
+    /*
+     * front end s3 bucket
      */
-    const messagesTable = new dynamodb.Table(this, 'MessagesTable', {
-      partitionKey: { name: 'id', type: dynamodb.AttributeType.STRING },
-      billingMode: dynamodb.BillingMode.PAY_PER_REQUEST, // typical free-tier billing mode, will not actually bill us as long as free tier is not exceeded but required to be set to avoid a worse default
-      removalPolicy: cdk.RemovalPolicy.RETAIN, // retain the table when the stack is deleted(idk if this should be destroy or not)
+    // Content bucket
+    const siteBucket = new s3.Bucket(this, 'team4sitebucket', {
+      bucketName: 'team4sitebucket',
+      publicReadAccess: false,
+      blockPublicAccess: s3.BlockPublicAccess.BLOCK_ALL,
+      removalPolicy: RemovalPolicy.DESTROY,
+      autoDeleteObjects: true,
     });
 
+    // Grant access to cloudfront
+    const cloudfrontOAI = new cloudfront.OriginAccessIdentity(this, 'cloudfront-OAI', {
+      comment: `OAI for ${id}`
+    });
+
+    siteBucket.addToResourcePolicy(new iam.PolicyStatement({
+      actions: ['s3:GetObject'],
+      resources: [siteBucket.arnForObjects('*')],
+      principals: [new iam.CanonicalUserPrincipal(cloudfrontOAI.cloudFrontOriginAccessIdentityS3CanonicalUserId)]
+    }));
+    new CfnOutput(this, 'Bucket', { value: siteBucket.bucketName });
+
+    // CloudFront distribution
+    const distribution = new cloudfront.Distribution(this, 'SiteDistribution', {
+      defaultRootObject: "index.html",
+      minimumProtocolVersion: cloudfront.SecurityPolicyProtocol.TLS_V1_2_2021,
+      errorResponses: [{
+        httpStatus: 403,
+        responseHttpStatus: 403,
+        responsePagePath: '/error.html',
+        ttl: Duration.minutes(30),
+      }],
+      defaultBehavior: {
+        origin: new cloudfront_origins.S3Origin(siteBucket, { originAccessIdentity: cloudfrontOAI }),
+        compress: true,
+        allowedMethods: cloudfront.AllowedMethods.ALLOW_GET_HEAD_OPTIONS,
+        viewerProtocolPolicy: cloudfront.ViewerProtocolPolicy.REDIRECT_TO_HTTPS,
+      }
+    })
+
+    new CfnOutput(this, 'DistributionId', { value: distribution.distributionId });
+
+    // Deploy site contents to S3 bucket
+    new s3deploy.BucketDeployment(this, 'DeployWithInvalidation', {
+      sources: [s3deploy.Source.asset(path.join(__dirname, '../site-contents'))],
+      destinationBucket: siteBucket,
+      distribution,
+      distributionPaths: ['/*'],
+    });
+
+    /*
+     * chat service
+     */
     const chatServiceLambdaFunction = new NodejsFunction(this, 'service-lambda', {
       handler: 'handler',
       runtime: lambda.Runtime.NODEJS_20_X,
@@ -37,6 +94,18 @@ export class Team4ProjectStack extends cdk.Stack {
     chatServiceApiPostResource.addMethod('GET');
     chatServiceApiPostResource.addMethod('POST');
 
+    /*
+     * database
+     */
+    const messagesTable = new dynamodb.Table(this, 'MessagesTable', {
+      partitionKey: { name: 'id', type: dynamodb.AttributeType.STRING },
+      billingMode: dynamodb.BillingMode.PAY_PER_REQUEST, // typical free-tier billing mode, will not actually bill us as long as free tier is not exceeded but required to be set to avoid a worse default
+      removalPolicy: cdk.RemovalPolicy.RETAIN, // retain the table when the stack is deleted(idk if this should be destroy or not)
+    });
+
+    /*
+     * db wrapper lambda
+     */
     // Define the dbWrapperLambdaFunction Lambda resource
     const dbWrapperLambdaFunction = new lambda.Function(this, 'DbWrapperLambdaFunction', {
       runtime: lambda.Runtime.NODEJS_20_X,
@@ -48,7 +117,7 @@ export class Team4ProjectStack extends cdk.Stack {
     });
     messagesTable.grantReadWriteData(dbWrapperLambdaFunction);
 
-    /* 
+    /*
      * sqs queue
      */
     const chatMessageDeadLetterQueue: sqs.DeadLetterQueue = {
@@ -64,7 +133,7 @@ export class Team4ProjectStack extends cdk.Stack {
       visibilityTimeout: cdk.Duration.seconds(300)
     });
 
-    /* 
+    /*
      * pull worker lambda
      */
     // Define pull worker lambda function resource
