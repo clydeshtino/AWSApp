@@ -1,0 +1,63 @@
+.container {
+    margin: auto;
+    width: 40%;
+    position: relative;
+}
+
+/* Form Style*/
+
+.formDiv {
+    font-family: Verdana, sans-serif;
+}
+
+.formTitle {
+    font-weight: bold;
+    margin: auto;
+    margin-bottom: 5px;
+}
+
+.titleInputBox {
+    width: 100%;
+}
+
+.messageInputBox {
+    width: 100%;
+    height: 50px;
+}
+
+.submitButton {
+    width: 100%;
+}
+
+/* Message Style */
+
+.content {
+    font-family: Verdana, sans-serif;
+    margin-left: auto; 
+    margin-right: 0;
+}
+
+.messages {
+    background-color: rgb(186, 206, 226);
+    border-radius: 10px;
+    width: 100%;
+    resize: both;
+    grid-area: overlap;
+    align-self: center;
+    justify-self: center;
+    padding-left: 10px;
+    padding-right: 10px;
+    padding-top: 5px;
+    padding-bottom: 5px;
+    margin-top: 10px;
+    font-size: 14px;
+}
+
+.messageTitle {
+    font-weight: bold;
+    margin-bottom: 10px;
+}
+
+.messageBody {
+    font-weight: normal;
+}
