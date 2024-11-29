@@ -46,13 +46,11 @@ export class Team4ProjectStack extends cdk.Stack {
         DYNAMODB_TABLE: messagesTable.tableName,
       },
     });
-
     messagesTable.grantReadWriteData(dbWrapperLambdaFunction);
-    
+
     /* 
      * sqs queue
      */
-
     const chatMessageDeadLetterQueue: sqs.DeadLetterQueue = {
       maxReceiveCount: 20,
       queue: new sqs.Queue(this, 'ChatMessageDeadLetterQueue'),
@@ -69,8 +67,7 @@ export class Team4ProjectStack extends cdk.Stack {
     /* 
      * pull worker lambda
      */
-
-    // Define ChatServiceLambda Lambda function resource
+    // Define pull worker lambda function resource
     const chatPullWorkerLambdaFunction = new NodejsFunction(this, 'pullworker-lambda', {
       runtime: lambda.Runtime.NODEJS_20_X,
       entry: 'lib/t4chat-stack.pullworker-lambda.ts',
@@ -80,7 +77,7 @@ export class Team4ProjectStack extends cdk.Stack {
       handler: 'handler',
       environment: {
         WRAPPER_LAMBDA_NAME: dbWrapperLambdaFunction.functionName,
-      },  
+      },
       role: new iam.Role(this, 'ChatMessageQueueExecutionRole', {
         roleName: 'ChatMessageQueueExecutionRole',
         assumedBy: new iam.ServicePrincipal('lambda.amazonaws.com'),

@@ -1,8 +1,6 @@
 import { InvocationType } from "aws-cdk-lib/triggers";
 import { SQSEvent, Context, SQSHandler, SQSRecord } from "aws-lambda";
-import * as AWS from "aws-sdk";
-export const handler
-: SQSHandler = async (
+export const handler: SQSHandler = async (
 	event: SQSEvent,
 	context: Context
 ): Promise < void > => {
@@ -22,7 +20,7 @@ async function processMessageAsync(message: SQSRecord): Promise < any > {
 		const params = {
 			FunctionName: process.env.WRAPPER_LAMBDA_NAME!,
 			InvocationType: 'Event', // async
-			Payload: JSON.stringify(message)	
+			Payload: JSON.stringify(message)
 		}
 		const result = await lambda.invoke(params).promise();
 		console.log(`Invoked lambda ${process.env.WRAPPER_LAMBDA_NAME!} with result ${result}`);
