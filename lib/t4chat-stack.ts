@@ -61,7 +61,7 @@ export class Team4ProjectStack extends cdk.Stack {
       defaultBehavior: {
         origin: new cloudfront_origins.S3Origin(siteBucket, { originAccessIdentity: cloudfrontOAI }),
         compress: true,
-        allowedMethods: cloudfront.AllowedMethods.ALLOW_GET_HEAD_OPTIONS,
+        allowedMethods: cloudfront.AllowedMethods.ALLOW_ALL,
         viewerProtocolPolicy: cloudfront.ViewerProtocolPolicy.REDIRECT_TO_HTTPS,
       }
     })
@@ -135,7 +135,10 @@ export class Team4ProjectStack extends cdk.Stack {
       const chatServiceApi = new apigateway.LambdaRestApi(this, 'ChatServiceApi', {
         handler: chatServiceLambdaFunction,
         proxy: false,
-      });
+        defaultCorsPreflightOptions: {
+          allowOrigins: ['https://d2h8kqlsohfm1u.cloudfront.net/'],
+          allowMethods: ['GET', 'POST'],
+      }});
 
       // Define the '/message' resource on ChatService API
       const chatServiceApiPostResource = chatServiceApi.root.addResource('message');

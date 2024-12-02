@@ -64,6 +64,10 @@ const handleCreatePost = async (event: any) => {
 
         return {
             statusCode: 200,
+            headers: {
+                'Content-Type': 'application/json',
+                'Access-Control-Allow-Origin': 'https://d2h8kqlsohfm1u.cloudfront.net/',
+            },
             body: JSON.stringify({ message: 'Post queued successfully', postId: post.id }),
         };
     } catch (error) {
@@ -89,7 +93,7 @@ const handleGetPosts = async (event: any) => {
             statusCode: 200,
             headers: {
                 'Content-Type': 'application/json',
-                'Access-Control-Allow-Origin': '*',
+                'Access-Control-Allow-Origin': 'https://d2h8kqlsohfm1u.cloudfront.net/',
             },
             body: JSON.stringify({ posts }),
         };
