@@ -136,10 +136,10 @@ export class Team4ProjectStack extends cdk.Stack {
         handler: chatServiceLambdaFunction,
         proxy: false,
         defaultCorsPreflightOptions: {
-          allowOrigins: ['https://d2h8kqlsohfm1u.cloudfront.net/'],
+          allowOrigins: ['https://d2h8kqlsohfm1u.cloudfront.net'],
           allowMethods: ['GET', 'POST'],
       }});
-
+        
       // Define the '/message' resource on ChatService API
       const chatServiceApiPostResource = chatServiceApi.root.addResource('message');
       chatServiceApiPostResource.addMethod('GET');
