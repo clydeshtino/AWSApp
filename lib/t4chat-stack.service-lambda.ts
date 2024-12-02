@@ -5,7 +5,7 @@ import { v4 as uuidv4 } from 'uuid';
 const sqs = new AWS.SQS();
 const dynamodb = new AWS.DynamoDB.DocumentClient();
 
-const CHAT_MESSAGE_QUEUE_URL = process.env.CREATE_POST_QUEUE_URL || '';
+const CHAT_MESSAGE_QUEUE_URL = process.env.CHAT_MESSAGE_QUEUE_URL || '';
 const DYNAMODB_TABLE = process.env.DYNAMODB_TABLE || '';
 
 
