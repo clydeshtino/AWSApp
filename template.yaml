@@ -1,0 +1,968 @@
+Resources:
+  team4sitebucketBC994639:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: team4sitebucket
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+      Tags:
+        - Key: aws-cdk:auto-delete-objects
+          Value: "true"
+        - Key: aws-cdk:cr-owned:138bd7b4
+          Value: "true"
+    UpdateReplacePolicy: Delete
+    DeletionPolicy: Delete
+    Metadata:
+      aws:cdk:path: Team4ProjectStack/team4sitebucket/Resource
+  team4sitebucketPolicy614EF1F4:
+    Type: AWS::S3::BucketPolicy
+    Properties:
+      Bucket:
+        Ref: team4sitebucketBC994639
+      PolicyDocument:
+        Statement:
+          - Action:
+              - s3:DeleteObject*
+              - s3:GetBucket*
+              - s3:List*
+              - s3:PutBucketPolicy
+            Effect: Allow
+            Principal:
+              AWS:
+                Fn::GetAtt:
+                  - CustomS3AutoDeleteObjectsCustomResourceProviderRole3B1BD092
+                  - Arn
+            Resource:
+              - Fn::GetAtt:
+                  - team4sitebucketBC994639
+                  - Arn
+              - Fn::Join:
+                  - ""
+                  - - Fn::GetAtt:
+                        - team4sitebucketBC994639
+                        - Arn
+                    - /*
+          - Action: s3:GetObject
+            Effect: Allow
+            Principal:
+              CanonicalUser:
+                Fn::GetAtt:
+                  - cloudfrontOAID153E53B
+                  - S3CanonicalUserId
+            Resource:
+              Fn::Join:
+                - ""
+                - - Fn::GetAtt:
+                      - team4sitebucketBC994639
+                      - Arn
+                  - /*
+        Version: "2012-10-17"
+    Metadata:
+      aws:cdk:path: Team4ProjectStack/team4sitebucket/Policy/Resource
+  team4sitebucketAutoDeleteObjectsCustomResource1F9473A3:
+    Type: Custom::S3AutoDeleteObjects
+    Properties:
+      ServiceToken:
+        Fn::GetAtt:
+          - CustomS3AutoDeleteObjectsCustomResourceProviderHandler9D90184F
+          - Arn
+      BucketName:
+        Ref: team4sitebucketBC994639
+    DependsOn:
+      - team4sitebucketPolicy614EF1F4
+    UpdateReplacePolicy: Delete
+    DeletionPolicy: Delete
+    Metadata:
+      aws:cdk:path: Team4ProjectStack/team4sitebucket/AutoDeleteObjectsCustomResource/Default
+  CustomS3AutoDeleteObjectsCustomResourceProviderRole3B1BD092:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Action: sts:AssumeRole
+            Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+      ManagedPolicyArns:
+        - Fn::Sub: arn:${AWS::Partition}:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+    Metadata:
+      aws:cdk:path: Team4ProjectStack/Custom::S3AutoDeleteObjectsCustomResourceProvider/Role
+  CustomS3AutoDeleteObjectsCustomResourceProviderHandler9D90184F:
+    Type: AWS::Lambda::Function
+    Properties:
+      Code:
+        S3Bucket:
+          Fn::Sub: cdk-hnb659fds-assets-${AWS::AccountId}-${AWS::Region}
+        S3Key: faa95a81ae7d7373f3e1f242268f904eb748d8d0fdd306e8a6fe515a1905a7d6.zip
+      Timeout: 900
+      MemorySize: 128
+      Handler: index.handler
+      Role:
+        Fn::GetAtt:
+          - CustomS3AutoDeleteObjectsCustomResourceProviderRole3B1BD092
+          - Arn
+      Runtime:
+        Fn::FindInMap:
+          - LatestNodeRuntimeMap
+          - Ref: AWS::Region
+          - value
+      Description:
+        Fn::Join:
+          - ""
+          - - "Lambda function for auto-deleting objects in "
+            - Ref: team4sitebucketBC994639
+            - " S3 bucket."
+    DependsOn:
+      - CustomS3AutoDeleteObjectsCustomResourceProviderRole3B1BD092
+    Metadata:
+      aws:cdk:path: Team4ProjectStack/Custom::S3AutoDeleteObjectsCustomResourceProvider/Handler
+      aws:asset:path: asset.faa95a81ae7d7373f3e1f242268f904eb748d8d0fdd306e8a6fe515a1905a7d6
+      aws:asset:property: Code
+  cloudfrontOAID153E53B:
+    Type: AWS::CloudFront::CloudFrontOriginAccessIdentity
+    Properties:
+      CloudFrontOriginAccessIdentityConfig:
+        Comment: OAI for Team4ProjectStack
+    Metadata:
+      aws:cdk:path: Team4ProjectStack/cloudfront-OAI/Resource
+  SiteDistribution3FF9535D:
+    Type: AWS::CloudFront::Distribution
+    Properties:
+      DistributionConfig:
+        CustomErrorResponses:
+          - ErrorCachingMinTTL: 1800
+            ErrorCode: 403
+            ResponseCode: 403
+            ResponsePagePath: /error.html
+        DefaultCacheBehavior:
+          AllowedMethods:
+            - GET
+            - HEAD
+            - OPTIONS
+          CachePolicyId: 658327ea-f89d-4fab-a63d-7e88639e58f6
+          Compress: true
+          TargetOriginId: Team4ProjectStackSiteDistributionOrigin1E20CFD2E
+          ViewerProtocolPolicy: redirect-to-https
+        DefaultRootObject: index.html
+        Enabled: true
+        HttpVersion: http2
+        IPV6Enabled: true
+        Origins:
+          - DomainName:
+              Fn::GetAtt:
+                - team4sitebucketBC994639
+                - RegionalDomainName
+            Id: Team4ProjectStackSiteDistributionOrigin1E20CFD2E
+            S3OriginConfig:
+              OriginAccessIdentity:
+                Fn::Join:
+                  - ""
+                  - - origin-access-identity/cloudfront/
+                    - Ref: cloudfrontOAID153E53B
+    Metadata:
+      aws:cdk:path: Team4ProjectStack/SiteDistribution/Resource
+  DeployWithInvalidationAwsCliLayerDEDD5787:
+    Type: AWS::Lambda::LayerVersion
+    Properties:
+      Content:
+        S3Bucket:
+          Fn::Sub: cdk-hnb659fds-assets-${AWS::AccountId}-${AWS::Region}
+        S3Key: 0457d333165d06eb6c6f378cdab18fc4e0714ab2e47bcdedd45059f77e7f37da.zip
+      Description: /opt/awscli/aws
+    Metadata:
+      aws:cdk:path: Team4ProjectStack/DeployWithInvalidation/AwsCliLayer/Resource
+      aws:asset:path: asset.0457d333165d06eb6c6f378cdab18fc4e0714ab2e47bcdedd45059f77e7f37da.zip
+      aws:asset:is-bundled: false
+      aws:asset:property: Content
+  DeployWithInvalidationCustomResourceE3FF7455:
+    Type: Custom::CDKBucketDeployment
+    Properties:
+      ServiceToken:
+        Fn::GetAtt:
+          - CustomCDKBucketDeployment8693BB64968944B69AAFB0CC9EB8756C81C01536
+          - Arn
+      SourceBucketNames:
+        - Fn::Sub: cdk-hnb659fds-assets-${AWS::AccountId}-${AWS::Region}
+      SourceObjectKeys:
+        - 883e02b4adef82490f4d2f193d641c124cdb5bdc664729de3fe8555451ac64a9.zip
+      DestinationBucketName:
+        Ref: team4sitebucketBC994639
+      Prune: true
+      DistributionId:
+        Ref: SiteDistribution3FF9535D
+      DistributionPaths:
+        - /*
+      OutputObjectKeys: true
+    UpdateReplacePolicy: Delete
+    DeletionPolicy: Delete
+    Metadata:
+      aws:cdk:path: Team4ProjectStack/DeployWithInvalidation/CustomResource/Default
+  CustomCDKBucketDeployment8693BB64968944B69AAFB0CC9EB8756CServiceRole89A01265:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Statement:
+          - Action: sts:AssumeRole
+            Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+        Version: "2012-10-17"
+      ManagedPolicyArns:
+        - Fn::Join:
+            - ""
+            - - "arn:"
+              - Ref: AWS::Partition
+              - :iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+    Metadata:
+      aws:cdk:path: Team4ProjectStack/Custom::CDKBucketDeployment8693BB64968944B69AAFB0CC9EB8756C/ServiceRole/Resource
+  CustomCDKBucketDeployment8693BB64968944B69AAFB0CC9EB8756CServiceRoleDefaultPolicy88902FDF:
+    Type: AWS::IAM::Policy
+    Properties:
+      PolicyDocument:
+        Statement:
+          - Action:
+              - s3:GetBucket*
+              - s3:GetObject*
+              - s3:List*
+            Effect: Allow
+            Resource:
+              - Fn::Join:
+                  - ""
+                  - - "arn:"
+                    - Ref: AWS::Partition
+                    - ":s3:::"
+                    - Fn::Sub: cdk-hnb659fds-assets-${AWS::AccountId}-${AWS::Region}
+                    - /*
+              - Fn::Join:
+                  - ""
+                  - - "arn:"
+                    - Ref: AWS::Partition
+                    - ":s3:::"
+                    - Fn::Sub: cdk-hnb659fds-assets-${AWS::AccountId}-${AWS::Region}
+          - Action:
+              - s3:Abort*
+              - s3:DeleteObject*
+              - s3:GetBucket*
+              - s3:GetObject*
+              - s3:List*
+              - s3:PutObject
+              - s3:PutObjectLegalHold
+              - s3:PutObjectRetention
+              - s3:PutObjectTagging
+              - s3:PutObjectVersionTagging
+            Effect: Allow
+            Resource:
+              - Fn::GetAtt:
+                  - team4sitebucketBC994639
+                  - Arn
+              - Fn::Join:
+                  - ""
+                  - - Fn::GetAtt:
+                        - team4sitebucketBC994639
+                        - Arn
+                    - /*
+          - Action:
+              - cloudfront:CreateInvalidation
+              - cloudfront:GetInvalidation
+            Effect: Allow
+            Resource: "*"
+        Version: "2012-10-17"
+      PolicyName: CustomCDKBucketDeployment8693BB64968944B69AAFB0CC9EB8756CServiceRoleDefaultPolicy88902FDF
+      Roles:
+        - Ref: CustomCDKBucketDeployment8693BB64968944B69AAFB0CC9EB8756CServiceRole89A01265
+    Metadata:
+      aws:cdk:path: Team4ProjectStack/Custom::CDKBucketDeployment8693BB64968944B69AAFB0CC9EB8756C/ServiceRole/DefaultPolicy/Resource
+  CustomCDKBucketDeployment8693BB64968944B69AAFB0CC9EB8756C81C01536:
+    Type: AWS::Lambda::Function
+    Properties:
+      Code:
+        S3Bucket:
+          Fn::Sub: cdk-hnb659fds-assets-${AWS::AccountId}-${AWS::Region}
+        S3Key: c6358465bf49dfae556bb430bf9c81fa578c221b82c308e3707901b1dd654762.zip
+      Environment:
+        Variables:
+          AWS_CA_BUNDLE: /etc/pki/ca-trust/extracted/pem/tls-ca-bundle.pem
+      Handler: index.handler
+      Layers:
+        - Ref: DeployWithInvalidationAwsCliLayerDEDD5787
+      Role:
+        Fn::GetAtt:
+          - CustomCDKBucketDeployment8693BB64968944B69AAFB0CC9EB8756CServiceRole89A01265
+          - Arn
+      Runtime: python3.11
+      Timeout: 900
+    DependsOn:
+      - CustomCDKBucketDeployment8693BB64968944B69AAFB0CC9EB8756CServiceRoleDefaultPolicy88902FDF
+      - CustomCDKBucketDeployment8693BB64968944B69AAFB0CC9EB8756CServiceRole89A01265
+    Metadata:
+      aws:cdk:path: Team4ProjectStack/Custom::CDKBucketDeployment8693BB64968944B69AAFB0CC9EB8756C/Resource
+      aws:asset:path: asset.c6358465bf49dfae556bb430bf9c81fa578c221b82c308e3707901b1dd654762
+      aws:asset:is-bundled: false
+      aws:asset:property: Code
+  MessagesTable05B58A27:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      AttributeDefinitions:
+        - AttributeName: id
+          AttributeType: S
+      BillingMode: PAY_PER_REQUEST
+      KeySchema:
+        - AttributeName: id
+          KeyType: HASH
+    UpdateReplacePolicy: Retain
+    DeletionPolicy: Retain
+    Metadata:
+      aws:cdk:path: Team4ProjectStack/MessagesTable/Resource
+  DbWrapperLambdaFunctionServiceRoleC31F6621:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Statement:
+          - Action: sts:AssumeRole
+            Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+        Version: "2012-10-17"
+      ManagedPolicyArns:
+        - Fn::Join:
+            - ""
+            - - "arn:"
+              - Ref: AWS::Partition
+              - :iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+    Metadata:
+      aws:cdk:path: Team4ProjectStack/DbWrapperLambdaFunction/ServiceRole/Resource
+  DbWrapperLambdaFunctionServiceRoleDefaultPolicyDDCC70F9:
+    Type: AWS::IAM::Policy
+    Properties:
+      PolicyDocument:
+        Statement:
+          - Action:
+              - dynamodb:BatchGetItem
+              - dynamodb:BatchWriteItem
+              - dynamodb:ConditionCheckItem
+              - dynamodb:DeleteItem
+              - dynamodb:DescribeTable
+              - dynamodb:GetItem
+              - dynamodb:GetRecords
+              - dynamodb:GetShardIterator
+              - dynamodb:PutItem
+              - dynamodb:Query
+              - dynamodb:Scan
+              - dynamodb:UpdateItem
+            Effect: Allow
+            Resource:
+              - Fn::GetAtt:
+                  - MessagesTable05B58A27
+                  - Arn
+              - Ref: AWS::NoValue
+          - Action:
+              - sqs:GetQueueAttributes
+              - sqs:GetQueueUrl
+              - sqs:SendMessage
+            Effect: Allow
+            Resource:
+              Fn::GetAtt:
+                - ChatMessageQueue5C008F3F
+                - Arn
+        Version: "2012-10-17"
+      PolicyName: DbWrapperLambdaFunctionServiceRoleDefaultPolicyDDCC70F9
+      Roles:
+        - Ref: DbWrapperLambdaFunctionServiceRoleC31F6621
+    Metadata:
+      aws:cdk:path: Team4ProjectStack/DbWrapperLambdaFunction/ServiceRole/DefaultPolicy/Resource
+  DbWrapperLambdaFunction50F69B95:
+    Type: AWS::Lambda::Function
+    Properties:
+      Code:
+        S3Bucket:
+          Fn::Sub: cdk-hnb659fds-assets-${AWS::AccountId}-${AWS::Region}
+        S3Key: d2788bac9910d9f2cd2059c097a610db30457910dffaed41533000c501f90bce.zip
+      Environment:
+        Variables:
+          DYNAMODB_TABLE:
+            Ref: MessagesTable05B58A27
+      Handler: index.handler
+      Role:
+        Fn::GetAtt:
+          - DbWrapperLambdaFunctionServiceRoleC31F6621
+          - Arn
+      Runtime: nodejs20.x
+    DependsOn:
+      - DbWrapperLambdaFunctionServiceRoleDefaultPolicyDDCC70F9
+      - DbWrapperLambdaFunctionServiceRoleC31F6621
+    Metadata:
+      aws:cdk:path: Team4ProjectStack/DbWrapperLambdaFunction/Resource
+      aws:asset:path: asset.d2788bac9910d9f2cd2059c097a610db30457910dffaed41533000c501f90bce
+      aws:asset:is-bundled: false
+      aws:asset:property: Code
+  ChatMessageDeadLetterQueue3EC289B6:
+    Type: AWS::SQS::Queue
+    UpdateReplacePolicy: Delete
+    DeletionPolicy: Delete
+    Metadata:
+      aws:cdk:path: Team4ProjectStack/ChatMessageDeadLetterQueue/Resource
+  ChatMessageQueue5C008F3F:
+    Type: AWS::SQS::Queue
+    Properties:
+      MessageRetentionPeriod: 600
+      QueueName: Team4ChatMessageQueue
+      RedrivePolicy:
+        deadLetterTargetArn:
+          Fn::GetAtt:
+            - ChatMessageDeadLetterQueue3EC289B6
+            - Arn
+        maxReceiveCount: 20
+      VisibilityTimeout: 300
+    UpdateReplacePolicy: Delete
+    DeletionPolicy: Delete
+    Metadata:
+      aws:cdk:path: Team4ProjectStack/ChatMessageQueue/Resource
+  servicelambdaServiceRoleB406A13A:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Statement:
+          - Action: sts:AssumeRole
+            Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+        Version: "2012-10-17"
+      ManagedPolicyArns:
+        - Fn::Join:
+            - ""
+            - - "arn:"
+              - Ref: AWS::Partition
+              - :iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+    Metadata:
+      aws:cdk:path: Team4ProjectStack/service-lambda/ServiceRole/Resource
+  servicelambda10E03F6E:
+    Type: AWS::Lambda::Function
+    Properties:
+      Code:
+        S3Bucket:
+          Fn::Sub: cdk-hnb659fds-assets-${AWS::AccountId}-${AWS::Region}
+        S3Key: ff43fae54dae230195bdb2fb6143bb6498de5b33088dccd6c09b54ec3331588c.zip
+      Environment:
+        Variables:
+          CHAT_MESSAGE_QUEUE_URL:
+            Ref: ChatMessageQueue5C008F3F
+          DYNAMODB_TABLE:
+            Ref: MessagesTable05B58A27
+      Handler: index.handler
+      Role:
+        Fn::GetAtt:
+          - servicelambdaServiceRoleB406A13A
+          - Arn
+      Runtime: nodejs20.x
+    DependsOn:
+      - servicelambdaServiceRoleB406A13A
+    Metadata:
+      aws:cdk:path: Team4ProjectStack/service-lambda/Resource
+      aws:asset:path: asset.ff43fae54dae230195bdb2fb6143bb6498de5b33088dccd6c09b54ec3331588c
+      aws:asset:is-bundled: true
+      aws:asset:property: Code
+  ChatServiceApi06D0DE87:
+    Type: AWS::ApiGateway::RestApi
+    Properties:
+      Name: ChatServiceApi
+    Metadata:
+      aws:cdk:path: Team4ProjectStack/ChatServiceApi/Resource
+  ChatServiceApiDeployment7DEE0655734ef68bee20ef4f305770ab14038281:
+    Type: AWS::ApiGateway::Deployment
+    Properties:
+      Description: Automatically created by the RestApi construct
+      RestApiId:
+        Ref: ChatServiceApi06D0DE87
+    DependsOn:
+      - ChatServiceApimessageGET9974192B
+      - ChatServiceApimessagePOST64DEE51C
+      - ChatServiceApimessageCB65C569
+    Metadata:
+      aws:cdk:path: Team4ProjectStack/ChatServiceApi/Deployment/Resource
+  ChatServiceApiDeploymentStageprodC68A2226:
+    Type: AWS::ApiGateway::Stage
+    Properties:
+      DeploymentId:
+        Ref: ChatServiceApiDeployment7DEE0655734ef68bee20ef4f305770ab14038281
+      RestApiId:
+        Ref: ChatServiceApi06D0DE87
+      StageName: prod
+    Metadata:
+      aws:cdk:path: Team4ProjectStack/ChatServiceApi/DeploymentStage.prod/Resource
+  ChatServiceApimessageCB65C569:
+    Type: AWS::ApiGateway::Resource
+    Properties:
+      ParentId:
+        Fn::GetAtt:
+          - ChatServiceApi06D0DE87
+          - RootResourceId
+      PathPart: message
+      RestApiId:
+        Ref: ChatServiceApi06D0DE87
+    Metadata:
+      aws:cdk:path: Team4ProjectStack/ChatServiceApi/Default/message/Resource
+  ChatServiceApimessageGETApiPermissionTeam4ProjectStackChatServiceApiD0FEA50FGETmessage5A9286D3:
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName:
+        Fn::GetAtt:
+          - servicelambda10E03F6E
+          - Arn
+      Principal: apigateway.amazonaws.com
+      SourceArn:
+        Fn::Join:
+          - ""
+          - - "arn:"
+            - Ref: AWS::Partition
+            - ":execute-api:"
+            - Ref: AWS::Region
+            - ":"
+            - Ref: AWS::AccountId
+            - ":"
+            - Ref: ChatServiceApi06D0DE87
+            - /
+            - Ref: ChatServiceApiDeploymentStageprodC68A2226
+            - /GET/message
+    Metadata:
+      aws:cdk:path: Team4ProjectStack/ChatServiceApi/Default/message/GET/ApiPermission.Team4ProjectStackChatServiceApiD0FEA50F.GET..message
+  ChatServiceApimessageGETApiPermissionTestTeam4ProjectStackChatServiceApiD0FEA50FGETmessageD8841905:
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName:
+        Fn::GetAtt:
+          - servicelambda10E03F6E
+          - Arn
+      Principal: apigateway.amazonaws.com
+      SourceArn:
+        Fn::Join:
+          - ""
+          - - "arn:"
+            - Ref: AWS::Partition
+            - ":execute-api:"
+            - Ref: AWS::Region
+            - ":"
+            - Ref: AWS::AccountId
+            - ":"
+            - Ref: ChatServiceApi06D0DE87
+            - /test-invoke-stage/GET/message
+    Metadata:
+      aws:cdk:path: Team4ProjectStack/ChatServiceApi/Default/message/GET/ApiPermission.Test.Team4ProjectStackChatServiceApiD0FEA50F.GET..message
+  ChatServiceApimessageGET9974192B:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      AuthorizationType: NONE
+      HttpMethod: GET
+      Integration:
+        IntegrationHttpMethod: POST
+        Type: AWS_PROXY
+        Uri:
+          Fn::Join:
+            - ""
+            - - "arn:"
+              - Ref: AWS::Partition
+              - ":apigateway:"
+              - Ref: AWS::Region
+              - :lambda:path/2015-03-31/functions/
+              - Fn::GetAtt:
+                  - servicelambda10E03F6E
+                  - Arn
+              - /invocations
+      ResourceId:
+        Ref: ChatServiceApimessageCB65C569
+      RestApiId:
+        Ref: ChatServiceApi06D0DE87
+    Metadata:
+      aws:cdk:path: Team4ProjectStack/ChatServiceApi/Default/message/GET/Resource
+  ChatServiceApimessagePOSTApiPermissionTeam4ProjectStackChatServiceApiD0FEA50FPOSTmessageE36B6B0A:
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName:
+        Fn::GetAtt:
+          - servicelambda10E03F6E
+          - Arn
+      Principal: apigateway.amazonaws.com
+      SourceArn:
+        Fn::Join:
+          - ""
+          - - "arn:"
+            - Ref: AWS::Partition
+            - ":execute-api:"
+            - Ref: AWS::Region
+            - ":"
+            - Ref: AWS::AccountId
+            - ":"
+            - Ref: ChatServiceApi06D0DE87
+            - /
+            - Ref: ChatServiceApiDeploymentStageprodC68A2226
+            - /POST/message
+    Metadata:
+      aws:cdk:path: Team4ProjectStack/ChatServiceApi/Default/message/POST/ApiPermission.Team4ProjectStackChatServiceApiD0FEA50F.POST..message
+  ChatServiceApimessagePOSTApiPermissionTestTeam4ProjectStackChatServiceApiD0FEA50FPOSTmessageB51BB618:
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName:
+        Fn::GetAtt:
+          - servicelambda10E03F6E
+          - Arn
+      Principal: apigateway.amazonaws.com
+      SourceArn:
+        Fn::Join:
+          - ""
+          - - "arn:"
+            - Ref: AWS::Partition
+            - ":execute-api:"
+            - Ref: AWS::Region
+            - ":"
+            - Ref: AWS::AccountId
+            - ":"
+            - Ref: ChatServiceApi06D0DE87
+            - /test-invoke-stage/POST/message
+    Metadata:
+      aws:cdk:path: Team4ProjectStack/ChatServiceApi/Default/message/POST/ApiPermission.Test.Team4ProjectStackChatServiceApiD0FEA50F.POST..message
+  ChatServiceApimessagePOST64DEE51C:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      AuthorizationType: NONE
+      HttpMethod: POST
+      Integration:
+        IntegrationHttpMethod: POST
+        Type: AWS_PROXY
+        Uri:
+          Fn::Join:
+            - ""
+            - - "arn:"
+              - Ref: AWS::Partition
+              - ":apigateway:"
+              - Ref: AWS::Region
+              - :lambda:path/2015-03-31/functions/
+              - Fn::GetAtt:
+                  - servicelambda10E03F6E
+                  - Arn
+              - /invocations
+      ResourceId:
+        Ref: ChatServiceApimessageCB65C569
+      RestApiId:
+        Ref: ChatServiceApi06D0DE87
+    Metadata:
+      aws:cdk:path: Team4ProjectStack/ChatServiceApi/Default/message/POST/Resource
+  ChatMessageQueueExecutionRole292DF6AA:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Statement:
+          - Action: sts:AssumeRole
+            Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+        Version: "2012-10-17"
+      ManagedPolicyArns:
+        - Fn::Join:
+            - ""
+            - - "arn:"
+              - Ref: AWS::Partition
+              - :iam::aws:policy/service-role/AWSLambdaSQSQueueExecutionRole
+        - Fn::Join:
+            - ""
+            - - "arn:"
+              - Ref: AWS::Partition
+              - :iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+      RoleName: ChatMessageQueueExecutionRole
+    Metadata:
+      aws:cdk:path: Team4ProjectStack/ChatMessageQueueExecutionRole/Resource
+  ChatMessageQueueExecutionRoleDefaultPolicy2F58AAC8:
+    Type: AWS::IAM::Policy
+    Properties:
+      PolicyDocument:
+        Statement:
+          - Action:
+              - sqs:ChangeMessageVisibility
+              - sqs:DeleteMessage
+              - sqs:GetQueueAttributes
+              - sqs:GetQueueUrl
+              - sqs:ReceiveMessage
+            Effect: Allow
+            Resource:
+              Fn::GetAtt:
+                - ChatMessageQueue5C008F3F
+                - Arn
+          - Action: lambda:InvokeFunction
+            Effect: Allow
+            Resource:
+              - Fn::GetAtt:
+                  - DbWrapperLambdaFunction50F69B95
+                  - Arn
+              - Fn::Join:
+                  - ""
+                  - - Fn::GetAtt:
+                        - DbWrapperLambdaFunction50F69B95
+                        - Arn
+                    - :*
+        Version: "2012-10-17"
+      PolicyName: ChatMessageQueueExecutionRoleDefaultPolicy2F58AAC8
+      Roles:
+        - Ref: ChatMessageQueueExecutionRole292DF6AA
+    Metadata:
+      aws:cdk:path: Team4ProjectStack/ChatMessageQueueExecutionRole/DefaultPolicy/Resource
+  pullworkerlambda1CC7FB97:
+    Type: AWS::Lambda::Function
+    Properties:
+      Code:
+        S3Bucket:
+          Fn::Sub: cdk-hnb659fds-assets-${AWS::AccountId}-${AWS::Region}
+        S3Key: 0ee97316391cd9f4ffd2ce777b82cc8342a366e9f2f11958a3bf3073d97358db.zip
+      Environment:
+        Variables:
+          WRAPPER_LAMBDA_NAME:
+            Ref: DbWrapperLambdaFunction50F69B95
+      Handler: index.handler
+      Role:
+        Fn::GetAtt:
+          - ChatMessageQueueExecutionRole292DF6AA
+          - Arn
+      Runtime: nodejs20.x
+    DependsOn:
+      - ChatMessageQueueExecutionRoleDefaultPolicy2F58AAC8
+      - ChatMessageQueueExecutionRole292DF6AA
+    Metadata:
+      aws:cdk:path: Team4ProjectStack/pullworker-lambda/Resource
+      aws:asset:path: asset.0ee97316391cd9f4ffd2ce777b82cc8342a366e9f2f11958a3bf3073d97358db
+      aws:asset:is-bundled: true
+      aws:asset:property: Code
+  pullworkerlambdaSqsEventSourceTeam4ProjectStackChatMessageQueueFF7E75327E051DEA:
+    Type: AWS::Lambda::EventSourceMapping
+    Properties:
+      BatchSize: 1
+      EventSourceArn:
+        Fn::GetAtt:
+          - ChatMessageQueue5C008F3F
+          - Arn
+      FunctionName:
+        Ref: pullworkerlambda1CC7FB97
+    Metadata:
+      aws:cdk:path: Team4ProjectStack/pullworker-lambda/SqsEventSource:Team4ProjectStackChatMessageQueueFF7E7532/Resource
+  CDKMetadata:
+    Type: AWS::CDK::Metadata
+    Properties:
+      Analytics: v2:deflate64:H4sIAAAAAAAA/22S224jIQyGn6X3hG0b7d6n01aq1EOaVHsbMeBMnTAwiyGjEZp3XwGTQ9Ve+bf1gc1vbvnNn9/8+kr0NJNqP9NY87j2Qu6Z6GkTac7jXZB78KzamkmVsLQa5XAuT3lJ7gTByKS2QW2dNZ7HN4cNmoWUQPSkwHj0+XCVmMfE/EjcI3mHdfBoTcIv85HRfBMVdNoOLRjPS+/7U4EJIvDEFymMTIu2VoLHamuexQDuLzhK167RNBq8NY/ByNzoJKqtudRLcC1SPvRwAOPXNjgJL6Lr0DQJ+F4dGYqWx5XVkIAcz9YVNTI1GNFaVfP4IepCZjEy+kc8vgcIuZjF8SUbYxXsiL/mcJpTdNgID70YeHzO4ArILzrM/Sd5YVJy9ZytvWhyqyJWQPk1aaGnZLqo6Bfwn1alUlHjyKpA3rY/0gk72vWFWjp7QAUuN8oLSwNMtr4F3wV/fLZOy9uInqRGvuip0pj3+WW+yhqF5Zckm/iOfh1u5/yGX1/tCHHmgvHYAl+V+B9iZ7UtCQMAAA==
+    Metadata:
+      aws:cdk:path: Team4ProjectStack/CDKMetadata/Default
+    Condition: CDKMetadataAvailable
+Mappings:
+  LatestNodeRuntimeMap:
+    af-south-1:
+      value: nodejs20.x
+    ap-east-1:
+      value: nodejs20.x
+    ap-northeast-1:
+      value: nodejs20.x
+    ap-northeast-2:
+      value: nodejs20.x
+    ap-northeast-3:
+      value: nodejs20.x
+    ap-south-1:
+      value: nodejs20.x
+    ap-south-2:
+      value: nodejs20.x
+    ap-southeast-1:
+      value: nodejs20.x
+    ap-southeast-2:
+      value: nodejs20.x
+    ap-southeast-3:
+      value: nodejs20.x
+    ap-southeast-4:
+      value: nodejs20.x
+    ap-southeast-5:
+      value: nodejs20.x
+    ap-southeast-7:
+      value: nodejs20.x
+    ca-central-1:
+      value: nodejs20.x
+    ca-west-1:
+      value: nodejs20.x
+    cn-north-1:
+      value: nodejs18.x
+    cn-northwest-1:
+      value: nodejs18.x
+    eu-central-1:
+      value: nodejs20.x
+    eu-central-2:
+      value: nodejs20.x
+    eu-north-1:
+      value: nodejs20.x
+    eu-south-1:
+      value: nodejs20.x
+    eu-south-2:
+      value: nodejs20.x
+    eu-west-1:
+      value: nodejs20.x
+    eu-west-2:
+      value: nodejs20.x
+    eu-west-3:
+      value: nodejs20.x
+    il-central-1:
+      value: nodejs20.x
+    me-central-1:
+      value: nodejs20.x
+    me-south-1:
+      value: nodejs20.x
+    mx-central-1:
+      value: nodejs20.x
+    sa-east-1:
+      value: nodejs20.x
+    us-east-1:
+      value: nodejs20.x
+    us-east-2:
+      value: nodejs20.x
+    us-west-1:
+      value: nodejs20.x
+    us-west-2:
+      value: nodejs20.x
+Outputs:
+  Bucket:
+    Value:
+      Ref: team4sitebucketBC994639
+  S3Bucket:
+    Value:
+      Ref: team4sitebucketBC994639
+  DistributionId:
+    Value:
+      Ref: SiteDistribution3FF9535D
+  ChatServiceApiEndpointD433A51E:
+    Value:
+      Fn::Join:
+        - ""
+        - - https://
+          - Ref: ChatServiceApi06D0DE87
+          - .execute-api.
+          - Ref: AWS::Region
+          - "."
+          - Ref: AWS::URLSuffix
+          - /
+          - Ref: ChatServiceApiDeploymentStageprodC68A2226
+          - /
+  APIEndpoint:
+    Value:
+      Fn::Join:
+        - ""
+        - - https://
+          - Ref: ChatServiceApi06D0DE87
+          - .execute-api.
+          - Ref: AWS::Region
+          - "."
+          - Ref: AWS::URLSuffix
+          - /
+          - Ref: ChatServiceApiDeploymentStageprodC68A2226
+          - /
+Conditions:
+  CDKMetadataAvailable:
+    Fn::Or:
+      - Fn::Or:
+          - Fn::Equals:
+              - Ref: AWS::Region
+              - af-south-1
+          - Fn::Equals:
+              - Ref: AWS::Region
+              - ap-east-1
+          - Fn::Equals:
+              - Ref: AWS::Region
+              - ap-northeast-1
+          - Fn::Equals:
+              - Ref: AWS::Region
+              - ap-northeast-2
+          - Fn::Equals:
+              - Ref: AWS::Region
+              - ap-northeast-3
+          - Fn::Equals:
+              - Ref: AWS::Region
+              - ap-south-1
+          - Fn::Equals:
+              - Ref: AWS::Region
+              - ap-south-2
+          - Fn::Equals:
+              - Ref: AWS::Region
+              - ap-southeast-1
+          - Fn::Equals:
+              - Ref: AWS::Region
+              - ap-southeast-2
+          - Fn::Equals:
+              - Ref: AWS::Region
+              - ap-southeast-3
+      - Fn::Or:
+          - Fn::Equals:
+              - Ref: AWS::Region
+              - ap-southeast-4
+          - Fn::Equals:
+              - Ref: AWS::Region
+              - ca-central-1
+          - Fn::Equals:
+              - Ref: AWS::Region
+              - ca-west-1
+          - Fn::Equals:
+              - Ref: AWS::Region
+              - cn-north-1
+          - Fn::Equals:
+              - Ref: AWS::Region
+              - cn-northwest-1
+          - Fn::Equals:
+              - Ref: AWS::Region
+              - eu-central-1
+          - Fn::Equals:
+              - Ref: AWS::Region
+              - eu-central-2
+          - Fn::Equals:
+              - Ref: AWS::Region
+              - eu-north-1
+          - Fn::Equals:
+              - Ref: AWS::Region
+              - eu-south-1
+          - Fn::Equals:
+              - Ref: AWS::Region
+              - eu-south-2
+      - Fn::Or:
+          - Fn::Equals:
+              - Ref: AWS::Region
+              - eu-west-1
+          - Fn::Equals:
+              - Ref: AWS::Region
+              - eu-west-2
+          - Fn::Equals:
+              - Ref: AWS::Region
+              - eu-west-3
+          - Fn::Equals:
+              - Ref: AWS::Region
+              - il-central-1
+          - Fn::Equals:
+              - Ref: AWS::Region
+              - me-central-1
+          - Fn::Equals:
+              - Ref: AWS::Region
+              - me-south-1
+          - Fn::Equals:
+              - Ref: AWS::Region
+              - sa-east-1
+          - Fn::Equals:
+              - Ref: AWS::Region
+              - us-east-1
+          - Fn::Equals:
+              - Ref: AWS::Region
+              - us-east-2
+          - Fn::Equals:
+              - Ref: AWS::Region
+              - us-west-1
+      - Fn::Equals:
+          - Ref: AWS::Region
+          - us-west-2
+Parameters:
+  BootstrapVersion:
+    Type: AWS::SSM::Parameter::Value<String>
+    Default: /cdk-bootstrap/hnb659fds/version
+    Description: Version of the CDK Bootstrap resources in this environment, automatically retrieved from SSM Parameter Store. [cdk:skip]
+

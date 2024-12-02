@@ -10,6 +10,7 @@ exports.handler = async (event) => {
         TableName: process.env.DYNAMODB_TABLE,
         Item: {
             id: message.id,
+            title: message.title,
             message: message.content,
             timestamp : new Date().toISOString()
         },

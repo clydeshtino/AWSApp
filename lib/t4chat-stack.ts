@@ -46,6 +46,7 @@ export class Team4ProjectStack extends cdk.Stack {
       principals: [new iam.CanonicalUserPrincipal(cloudfrontOAI.cloudFrontOriginAccessIdentityS3CanonicalUserId)]
     }));
     new CfnOutput(this, 'Bucket', { value: siteBucket.bucketName });
+    new CfnOutput(this, 'S3Bucket', { value: siteBucket.bucketName });
 
     // CloudFront distribution
     const distribution = new cloudfront.Distribution(this, 'SiteDistribution', {
@@ -66,6 +67,7 @@ export class Team4ProjectStack extends cdk.Stack {
     })
 
     new CfnOutput(this, 'DistributionId', { value: distribution.distributionId });
+    new CfnOutput(this, 'CloudFrontDistribution', { value: distribution.distributionDomainName})
 
     // Deploy site contents to S3 bucket
     new s3deploy.BucketDeployment(this, 'DeployWithInvalidation', {
@@ -76,31 +78,12 @@ export class Team4ProjectStack extends cdk.Stack {
     });
 
     /*
-     * chat service
-     */
-    const chatServiceLambdaFunction = new NodejsFunction(this, 'service-lambda', {
-      handler: 'handler',
-      runtime: lambda.Runtime.NODEJS_20_X,
-    });
-
-    // Define ChatServiceApi API Gateway resource
-    const chatServiceApi = new apigateway.LambdaRestApi(this, 'ChatServiceApi', {
-      handler: chatServiceLambdaFunction,
-      proxy: false,
-    });
-
-    // Define the '/message' resource on ChatService API
-    const chatServiceApiPostResource = chatServiceApi.root.addResource('message');
-    chatServiceApiPostResource.addMethod('GET');
-    chatServiceApiPostResource.addMethod('POST');
-
-    /*
      * database
      */
     const messagesTable = new dynamodb.Table(this, 'MessagesTable', {
       partitionKey: { name: 'id', type: dynamodb.AttributeType.STRING },
       billingMode: dynamodb.BillingMode.PAY_PER_REQUEST, // typical free-tier billing mode, will not actually bill us as long as free tier is not exceeded but required to be set to avoid a worse default
-      removalPolicy: cdk.RemovalPolicy.RETAIN, // retain the table when the stack is deleted(idk if this should be destroy or not)
+      removalPolicy: cdk.RemovalPolicy.DESTROY, // retain the table when the stack is deleted(idk if this should be destroy or not)
     });
 
     /*
@@ -120,6 +103,7 @@ export class Team4ProjectStack extends cdk.Stack {
     /*
      * sqs queue
      */
+
     const chatMessageDeadLetterQueue: sqs.DeadLetterQueue = {
       maxReceiveCount: 20,
       queue: new sqs.Queue(this, 'ChatMessageDeadLetterQueue'),
@@ -132,6 +116,32 @@ export class Team4ProjectStack extends cdk.Stack {
       retentionPeriod: cdk.Duration.seconds(600),
       visibilityTimeout: cdk.Duration.seconds(300)
     });
+
+      chatMessageQueue.grantSendMessages(dbWrapperLambdaFunction);
+
+       /*
+     * chat service
+     */
+      const chatServiceLambdaFunction = new NodejsFunction(this, 'service-lambda', {
+        handler: 'handler',
+        runtime: lambda.Runtime.NODEJS_20_X,
+        environment: {
+          CHAT_MESSAGE_QUEUE_URL: chatMessageQueue.queueUrl,
+          DYNAMODB_TABLE: messagesTable.tableName,
+        }
+      });
+
+       // Define ChatServiceApi API Gateway resource
+      const chatServiceApi = new apigateway.LambdaRestApi(this, 'ChatServiceApi', {
+        handler: chatServiceLambdaFunction,
+        proxy: false,
+      });
+
+      // Define the '/message' resource on ChatService API
+      const chatServiceApiPostResource = chatServiceApi.root.addResource('message');
+      chatServiceApiPostResource.addMethod('GET');
+      chatServiceApiPostResource.addMethod('POST');
+      new CfnOutput(this, 'APIEndpoint', { value: chatServiceApi.url });
 
     /*
      * pull worker lambda
@@ -157,5 +167,6 @@ export class Team4ProjectStack extends cdk.Stack {
       }),
     });
     dbWrapperLambdaFunction.grantInvoke(chatPullWorkerLambdaFunction);
+    chatMessageQueue.grantConsumeMessages(chatPullWorkerLambdaFunction);
   }
 }
