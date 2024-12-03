@@ -25,13 +25,84 @@ export class Team4ProjectStack extends cdk.Stack {
     super(scope, id, props);
 
     /*
+     * database
+     */
+    const messagesTable = new dynamodb.Table(this, 'MessagesTable', {
+      tableName: 'MessagesTable',
+      partitionKey: { name: 'id', type: dynamodb.AttributeType.STRING },
+      billingMode: dynamodb.BillingMode.PAY_PER_REQUEST, // typical free-tier billing mode, will not actually bill us as long as free tier is not exceeded but required to be set to avoid a worse default
+      removalPolicy: cdk.RemovalPolicy.DESTROY, // retain the table when the stack is deleted(idk if this should be destroy or not)
+    });
+
+    /*
+     * sqs queue
+     */
+    const chatMessageQueue = new sqs.Queue(this, 'ChatMessageQueue', {
+      queueName: 'Team4ChatMessageQueue',
+      retentionPeriod: cdk.Duration.seconds(600),
+      visibilityTimeout: cdk.Duration.seconds(300)
+    });
+
+    /*
+     * db wrapper lambda
+     */
+    const dbWrapperLambdaFunction = new NodejsFunction(this, 'dbWrapper-lambda', {
+      runtime: lambda.Runtime.NODEJS_20_X,
+      handler: 'handler',
+      environment: {
+        DYNAMODB_TABLE: messagesTable.tableName,
+      },
+    });
+    messagesTable.grantReadWriteData(dbWrapperLambdaFunction);
+
+    /*
+     * chat service
+     */
+    const chatServiceLambdaFunction = new NodejsFunction(this, 'service-lambda', {
+      handler: 'handler',
+      runtime: lambda.Runtime.NODEJS_20_X,
+      environment: {
+        CHAT_MESSAGE_QUEUE_URL: chatMessageQueue.queueUrl,
+        DYNAMODB_TABLE: messagesTable.tableName,
+      }
+    });
+    new CfnOutput(this, 'ChatMessaqeQueueUrl', { value: chatMessageQueue.queueUrl });
+
+    // Define ChatServiceApi API Gateway resource
+    const chatServiceApi = new apigateway.LambdaRestApi(this, 'ChatServiceApi', {
+      handler: chatServiceLambdaFunction,
+      proxy: true,
+      defaultCorsPreflightOptions: {
+        allowOrigins: ['*'],
+        allowMethods: ['OPTIONS', 'GET', 'POST'],
+        allowHeaders: [
+          'Content-Type',
+          'Authorization',
+          'X-Api-Key',
+          'X-Amz-Date',
+          'X-Amz-Security-Token',
+          'X-Amz-User-Agent',
+        ],
+      },
+    });
+    new CfnOutput(this, 'ServiceApiUrl', { value: chatServiceApi.url });
+    messagesTable.grantReadWriteData(chatServiceLambdaFunction);
+    chatMessageQueue.grantSendMessages(chatServiceLambdaFunction);
+
+    /*
      * front end s3 bucket
      */
     // Content bucket
     const siteBucket = new s3.Bucket(this, 'team4sitebucket', {
       bucketName: 'team4sitebucket',
-      publicReadAccess: false,
-      blockPublicAccess: s3.BlockPublicAccess.BLOCK_ALL,
+      publicReadAccess: true,
+      // blockPublicAccess: s3.BlockPublicAccess.BLOCK_ALL,
+      blockPublicAccess: {
+        blockPublicPolicy: false,
+        blockPublicAcls: false,
+        ignorePublicAcls: false,
+        restrictPublicBuckets: false,
+      },
       removalPolicy: RemovalPolicy.DESTROY,
       autoDeleteObjects: true,
     });
@@ -46,7 +117,6 @@ export class Team4ProjectStack extends cdk.Stack {
       resources: [siteBucket.arnForObjects('*')],
       principals: [new iam.CanonicalUserPrincipal(cloudfrontOAI.cloudFrontOriginAccessIdentityS3CanonicalUserId)]
     }));
-    new CfnOutput(this, 'Bucket', { value: siteBucket.bucketName });
     new CfnOutput(this, 'S3Bucket', { value: siteBucket.bucketName });
 
     // CloudFront distribution
@@ -66,91 +136,24 @@ export class Team4ProjectStack extends cdk.Stack {
         viewerProtocolPolicy: cloudfront.ViewerProtocolPolicy.REDIRECT_TO_HTTPS,
       }
     })
+    new CfnOutput(this, 'AppDomain', { value: distribution.distributionDomainName })
 
-    new CfnOutput(this, 'DistributionId', { value: distribution.distributionId });
-    new CfnOutput(this, 'CloudFrontDistribution', { value: distribution.distributionDomainName})
 
     // Deploy site contents to S3 bucket
+    const config = {
+      serviceApiUrl: chatServiceApi.url
+    }
+
     new s3deploy.BucketDeployment(this, 'DeployWithInvalidation', {
-      sources: [s3deploy.Source.asset(path.join(__dirname, '../site-contents'))],
+      sources: [
+        s3deploy.Source.asset(path.join(__dirname, '../site-contents')),
+        s3deploy.Source.jsonData('config.json', config) // :pray: https://github.com/aws/aws-cdk/pull/18659
+      ],
       destinationBucket: siteBucket,
       distribution,
       distributionPaths: ['/*'],
     });
 
-    /*
-     * database
-     */
-    const messagesTable = new dynamodb.Table(this, 'MessagesTable', {
-      tableName: 'MessagesTable',
-      partitionKey: { name: 'id', type: dynamodb.AttributeType.STRING },
-      billingMode: dynamodb.BillingMode.PAY_PER_REQUEST, // typical free-tier billing mode, will not actually bill us as long as free tier is not exceeded but required to be set to avoid a worse default
-      removalPolicy: cdk.RemovalPolicy.DESTROY, // retain the table when the stack is deleted(idk if this should be destroy or not)
-    });
-    /*
-     * sqs queue
-     */
-
-    const chatMessageDeadLetterQueue: sqs.DeadLetterQueue = {
-      maxReceiveCount: 20,
-      queue: new sqs.Queue(this, 'ChatMessageDeadLetterQueue'),
-    };
-
-    // Define Team4ChatMessageQueue SQS resource
-    const chatMessageQueue = new sqs.Queue(this, 'ChatMessageQueue', {
-      deadLetterQueue: chatMessageDeadLetterQueue,
-      queueName: 'Team4ChatMessageQueue',
-      retentionPeriod: cdk.Duration.seconds(600),
-      visibilityTimeout: cdk.Duration.seconds(300)
-    });
-
-    /*
-     * db wrapper lambda
-     */
-    // Define the dbWrapperLambdaFunction Lambda resource
-    const dbWrapperLambdaFunction = new NodejsFunction(this, 'dbWrapper-lambda', {
-      runtime: lambda.Runtime.NODEJS_20_X,
-      handler: 'handler',
-      environment: {
-        DYNAMODB_TABLE: messagesTable.tableName,
-      },
-    });
-    messagesTable.grantReadWriteData(dbWrapperLambdaFunction);
-    chatMessageQueue.grantSendMessages(dbWrapperLambdaFunction);
-       /*
-     * chat service
-     */
-      const chatServiceLambdaFunction = new NodejsFunction(this, 'service-lambda', {
-        handler: 'handler',
-        runtime: lambda.Runtime.NODEJS_20_X,
-        environment: {
-          CHAT_MESSAGE_QUEUE_URL: chatMessageQueue.queueUrl,
-          DYNAMODB_TABLE: messagesTable.tableName,
-        }
-      });
-      new CfnOutput(this, 'ChatMessaqeQueueUrl', { value: chatMessageQueue.queueUrl });
-       // Define ChatServiceApi API Gateway resource
-       const chatServiceApi = new apigateway.LambdaRestApi(this, 'ChatServiceApi', {
-        handler: chatServiceLambdaFunction,
-        proxy: true,
-        defaultCorsPreflightOptions: {
-          allowOrigins: ['*'],
-          allowMethods: ['OPTIONS', 'GET', 'POST'],
-          allowHeaders: [
-            'Content-Type',
-            'Authorization',
-            'X-Api-Key',
-            'X-Amz-Date',
-            'X-Amz-Security-Token',
-            'X-Amz-User-Agent',
-          ],
-        },
-      });
-      // Define the '/message' resource on ChatService API
-      // const chatServiceApiPostResource = chatServiceApi.root.addResource('message');
-    new CfnOutput(this, 'APIEndpoint', { value: chatServiceApi.url });
-    messagesTable.grantReadWriteData(chatServiceLambdaFunction);
-    chatMessageQueue.grantSendMessages(chatServiceLambdaFunction);
     /*
      * pull worker lambda
      */

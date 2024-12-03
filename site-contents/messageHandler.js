@@ -1,3 +1,4 @@
+import config from './config.json';
 
 document.addEventListener('DOMContentLoaded', () => {
     const form = document.getElementById('form');
@@ -20,7 +21,7 @@ document.addEventListener('DOMContentLoaded', () => {
             message,
         }
         try {
-            const response = await fetch('https://n5aaxkxy5h.execute-api.us-east-1.amazonaws.com/prod/message', {
+            const response = await fetch(config.serviceApiUrl, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -45,7 +46,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const fetchPosts = async () => {
         try {
-            const response = await fetch('https://n5aaxkxy5h.execute-api.us-east-1.amazonaws.com/prod/message', {
+            const response = await fetch(config.serviceApiUrl, {
                 method: 'GET',
                 headers: {
                     'Content-Type': 'application/json',
