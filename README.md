@@ -31,8 +31,11 @@ We designed our application with public-private split using AWS resources to ens
 ## Run the application
 Assuming that your AWS CLI is already configured run:
         ```npm run install
+        ```
+        ```
            cdk deploy
-            ```
+          ```
+            
 
 To kill the app and all resources run:
       ```
