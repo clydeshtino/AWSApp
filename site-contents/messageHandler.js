@@ -51,7 +51,6 @@ document.addEventListener('DOMContentLoaded', () => {
                     'Content-Type': 'application/json',
                 },
             });
-
             const data = await response.json();
 
             if (data.posts) {
@@ -74,10 +73,10 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
 
-        const list = document.createElement('list');
+        const list = document.createElement('ol');
 
         posts.forEach((post) => {
-            const item = document.createElement('item');
+            const item = document.createElement('li');
             const title = document.createElement('h3');
             title.textContent = post.title;
             const messagePg = document.createElement('p');

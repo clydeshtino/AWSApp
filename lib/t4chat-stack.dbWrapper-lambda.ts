@@ -1,6 +1,7 @@
 // for db wrapper lambda
 import { DynamoDB } from 'aws-sdk';
 import { APIGatewayProxyResult } from 'aws-lambda';
+import { Table } from 'aws-cdk-lib/aws-dynamodb';
 const dynamoDb = new DynamoDB.DocumentClient();
 
 interface Message {
@@ -22,7 +23,7 @@ export const handler = async (event: any): Promise<APIGatewayProxyResult> => {
       body: JSON.stringify('Invalid message structure'),
     };
   }
-
+  console.log(`${process.env.DYNAMODB_TABLE}`);
   const params: DynamoDB.DocumentClient.PutItemInput = {
     TableName: process.env.DYNAMODB_TABLE || '',
     Item: {
@@ -33,10 +34,10 @@ export const handler = async (event: any): Promise<APIGatewayProxyResult> => {
     },
     ConditionExpression: 'attribute_not_exists(id)', // idempotency check
   };
-
   try {
-    await dynamoDb.put(params).promise();
+    const result = await dynamoDb.put(params).promise();
     console.log(`Successfully added message with id: ${message.id}`);
+    console.log(`Result: ${JSON.stringify(result)}`);
   } catch (error: any) {
     if (error.code === 'ConditionalCheckFailedException') {
       console.warn(`Message with id: ${message.id} already exists`);
