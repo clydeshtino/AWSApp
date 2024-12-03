@@ -13,6 +13,7 @@ export const handler: APIGatewayProxyHandler = async (event) => {
 
     const httpMethod = event.httpMethod;
     const path = event.path;
+    console.log(`httpMethod: ${httpMethod}, path: ${path}`);
 
     try {
         if (httpMethod === 'POST' && path === '/message') {
@@ -21,7 +22,7 @@ export const handler: APIGatewayProxyHandler = async (event) => {
             return await handleGetPosts(event);
         } else {
             return {
-                statusCode: 404,
+                statusCode: 400,
                 headers: {
                     'Content-Type': 'application/json',
                     'Access-Control-Allow-Origin': 'https://d1l6jq484ihqt0.cloudfront.net',
