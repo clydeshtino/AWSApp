@@ -108,10 +108,9 @@ export class Team4ProjectStack extends cdk.Stack {
      * db wrapper lambda
      */
     // Define the dbWrapperLambdaFunction Lambda resource
-    const dbWrapperLambdaFunction = new lambda.Function(this, 'DbWrapperLambdaFunction', {
+    const dbWrapperLambdaFunction = new NodejsFunction(this, 'dbWrapper-lambda', {
       runtime: lambda.Runtime.NODEJS_20_X,
-      handler: 'index.handler',
-      code: lambda.Code.fromAsset('lambda/dbWrapper'),
+      handler: 'handler',
       environment: {
         DYNAMODB_TABLE: messagesTable.tableName,
       },

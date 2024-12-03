@@ -1,6 +1,5 @@
 *.js
 !jest.config.js
-!index.js
 !messageHandler.js
 *.d.ts
 node_modules
