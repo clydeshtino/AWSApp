@@ -1,8 +1,8 @@
-# Team 4 Project : Chat
+# Team 4 Project : Chat MVP
 
 Team 4's app consists of a CDK (Cloud Development Kit) project written in typescript. The app is a chat app where users can post whatever messages they wish. We utilized key AWS resources to create this app and ensure functionality.
 
-# Project Architecture
+## Project Architecture
 We designed our application with public-private split using AWS resources to ensure scalability and security.
 
 ### Public Layer
