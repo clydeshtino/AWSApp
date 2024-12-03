@@ -81,6 +81,7 @@ export class Team4ProjectStack extends cdk.Stack {
      * database
      */
     const messagesTable = new dynamodb.Table(this, 'MessagesTable', {
+      tableName: 'MessagesTable',
       partitionKey: { name: 'id', type: dynamodb.AttributeType.STRING },
       billingMode: dynamodb.BillingMode.PAY_PER_REQUEST, // typical free-tier billing mode, will not actually bill us as long as free tier is not exceeded but required to be set to avoid a worse default
       removalPolicy: cdk.RemovalPolicy.DESTROY, // retain the table when the stack is deleted(idk if this should be destroy or not)
@@ -135,6 +136,7 @@ export class Team4ProjectStack extends cdk.Stack {
         defaultCorsPreflightOptions: {
           allowOrigins: ['https://d1l6jq484ihqt0.cloudfront.net'],
           allowMethods: ['GET', 'POST', 'OPTIONS'],
+          allowHeaders: ['Content-Type', 'Authorization', 'X-Api-Key', 'X-Amz-Date', 'X-Amz-Security-Token', 'X-Amz-User-Agent'],
       }});
 
       // Define the '/message' resource on ChatService API

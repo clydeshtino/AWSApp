@@ -4,18 +4,26 @@ const dynamoDb = new AWS.DynamoDB.DocumentClient();
 
 exports.handler = async (event) => {
     console.log('Received event:', JSON.stringify(event, null, 2));
+    const message = event;
+    if (!message.id || !message.title || !message.message || !message.timestamp) {
+        console.error('Invalid message structure:', JSON.stringify(message, null, 2));
+        return {
+            statusCode: 400,
+            body: JSON.stringify('Invalid message structure'),
+        };
+    }
 
-    const message = event.body ? JSON.parse(event.body) : event;
     const params = {
         TableName: process.env.DYNAMODB_TABLE,
         Item: {
             id: message.id,
             title: message.title,
-            message: message.content,
-            timestamp : new Date().toISOString()
+            message: message.message,
+            timestamp: message.timestamp,
         },
-        ConditionExpression: 'attribute_not_exists(id)' // check idempotency id
+        ConditionExpression: 'attribute_not_exists(id)', // check idempotency
     };
+
     try {
         await dynamoDb.put(params).promise();
         console.log(`Successfully added message with id: ${message.id}`);
