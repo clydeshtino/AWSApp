@@ -110,3 +110,27 @@ document.addEventListener('DOMContentLoaded', () => {
             console.error('Error loading config:', error);
         });
 });
+
+StephenAddPostFunc = (posts) => {
+    //event.preventDefault(); // Prevent the form from submitting
+
+    const div = document.createElement('div');
+    div.classList.add('messages');
+
+    const title = document.createElement('div');
+    title.textContent = document.querySelector(post.title).value;
+    title.classList.add('messageTitle');
+
+    const body = document.createElement('div');
+    body.textContent = document.querySelector(post.message).value;
+    body.classList.add('messageBody');
+
+    const timestampSmall = document.createElement('small');
+    timestampSmall.textContent = new Date(post.timestamp).toLocaleString();
+    timestampSmall.classList.add('messageBody');
+    
+    div.appendChild(title);
+    div.appendChild(body);
+    div.appendChild(timestampSmall);
+    document.getElementById('content').prepend(div); // adds to the START of the list rather than the end (most recent post first)
+};
