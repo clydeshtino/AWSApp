@@ -85,21 +85,6 @@ export class Team4ProjectStack extends cdk.Stack {
       billingMode: dynamodb.BillingMode.PAY_PER_REQUEST, // typical free-tier billing mode, will not actually bill us as long as free tier is not exceeded but required to be set to avoid a worse default
       removalPolicy: cdk.RemovalPolicy.DESTROY, // retain the table when the stack is deleted(idk if this should be destroy or not)
     });
-
-    /*
-     * db wrapper lambda
-     */
-    // Define the dbWrapperLambdaFunction Lambda resource
-    const dbWrapperLambdaFunction = new lambda.Function(this, 'DbWrapperLambdaFunction', {
-      runtime: lambda.Runtime.NODEJS_20_X,
-      handler: 'index.handler',
-      code: lambda.Code.fromAsset('lambda/dbWrapper'),
-      environment: {
-        DYNAMODB_TABLE: messagesTable.tableName,
-      },
-    });
-    messagesTable.grantReadWriteData(dbWrapperLambdaFunction);
-
     /*
      * sqs queue
      */
@@ -117,8 +102,20 @@ export class Team4ProjectStack extends cdk.Stack {
       visibilityTimeout: cdk.Duration.seconds(300)
     });
 
-      chatMessageQueue.grantSendMessages(dbWrapperLambdaFunction);
-
+    /*
+     * db wrapper lambda
+     */
+    // Define the dbWrapperLambdaFunction Lambda resource
+    const dbWrapperLambdaFunction = new lambda.Function(this, 'DbWrapperLambdaFunction', {
+      runtime: lambda.Runtime.NODEJS_20_X,
+      handler: 'index.handler',
+      code: lambda.Code.fromAsset('lambda/dbWrapper'),
+      environment: {
+        DYNAMODB_TABLE: messagesTable.tableName,
+      },
+    });
+    messagesTable.grantReadWriteData(dbWrapperLambdaFunction);
+    chatMessageQueue.grantSendMessages(dbWrapperLambdaFunction);
        /*
      * chat service
      */
@@ -232,6 +229,8 @@ export class Team4ProjectStack extends cdk.Stack {
         ],
       });
     new CfnOutput(this, 'APIEndpoint', { value: chatServiceApi.url });
+    messagesTable.grantReadWriteData(chatServiceLambdaFunction);
+    chatMessageQueue.grantSendMessages(chatServiceLambdaFunction);
     /*
      * pull worker lambda
      */
@@ -246,17 +245,37 @@ export class Team4ProjectStack extends cdk.Stack {
       environment: {
         WRAPPER_LAMBDA_NAME: dbWrapperLambdaFunction.functionName,
       },
-      role: new iam.Role(this, 'ChatMessageQueueExecutionRole', {
-        roleName: 'ChatMessageQueueExecutionRole',
+      role: new iam.Role(this, 'Team4ChatMessageQueueExecutionRole', {
         assumedBy: new iam.ServicePrincipal('lambda.amazonaws.com'),
         managedPolicies: [
-          iam.ManagedPolicy.fromAwsManagedPolicyName("service-role/AWSLambdaSQSQueueExecutionRole"),
-          iam.ManagedPolicy.fromAwsManagedPolicyName("service-role/AWSLambdaBasicExecutionRole"),
-        ]
+          iam.ManagedPolicy.fromAwsManagedPolicyName('service-role/AWSLambdaBasicExecutionRole'),
+          iam.ManagedPolicy.fromAwsManagedPolicyName('service-role/AWSLambdaSQSQueueExecutionRole'),
+        ],
+        inlinePolicies: {
+          InvokeDBWrapper: new iam.PolicyDocument({
+            statements: [
+              new iam.PolicyStatement({
+                actions: ['lambda:InvokeFunction'],
+                resources: [dbWrapperLambdaFunction.functionArn],
+              }),
+            ],
+          }),
+          WriteToDynamoDB: new iam.PolicyDocument({
+            statements: [
+              new iam.PolicyStatement({
+                actions: [
+                  'dynamodb:PutItem',
+                  'dynamodb:UpdateItem',
+                  'dynamodb:BatchWriteItem',
+                ],
+                resources: [messagesTable.tableArn],
+              }),
+            ],
+          }),
+        },
       }),
     });
     dbWrapperLambdaFunction.grantInvoke(chatPullWorkerLambdaFunction);
     chatMessageQueue.grantConsumeMessages(chatPullWorkerLambdaFunction);
-    chatMessageQueue.grantSendMessages(chatServiceLambdaFunction);
   }
 }
