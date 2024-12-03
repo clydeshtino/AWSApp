@@ -85,24 +85,25 @@ document.addEventListener('DOMContentLoaded', () => {
                     return;
                 }
 
-                const list = document.createElement('ol');
+                //const list = document.createElement('ol');
 
                 posts.forEach((post) => {
-                    const item = document.createElement('li');
-                    const title = document.createElement('h3');
-                    title.textContent = post.title;
-                    const messagePg = document.createElement('p');
-                    messagePg.textContent = post.message;
-                    const timestampSmall = document.createElement('small');
-                    timestampSmall.textContent = new Date(post.timestamp).toLocaleString();
+                    // const item = document.createElement('li');
+                    // const title = document.createElement('h3');
+                    // title.textContent = post.title;
+                    // const messagePg = document.createElement('p');
+                    // messagePg.textContent = post.message;
+                    // const timestampSmall = document.createElement('small');
+                    // timestampSmall.textContent = new Date(post.timestamp).toLocaleString();
 
-                    item.appendChild(title);
-                    item.appendChild(messagePg);
-                    item.appendChild(timestampSmall);
-                    list.appendChild(item);
+                    // item.appendChild(title);
+                    // item.appendChild(messagePg);
+                    // item.appendChild(timestampSmall);
+                    // list.appendChild(item);
+                    StephenAddPostFunc(post);
                 });
 
-                contentDiv.appendChild(list);
+                //contentDiv.appendChild(list);
             };
             fetchPosts(); // fetch posts when page is loaded
         })
@@ -111,7 +112,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
 });
 
-StephenAddPostFunc = (posts) => {
+StephenAddPostFunc = (post) => {
     //event.preventDefault(); // Prevent the form from submitting
 
     const div = document.createElement('div');
@@ -132,5 +133,5 @@ StephenAddPostFunc = (posts) => {
     div.appendChild(title);
     div.appendChild(body);
     div.appendChild(timestampSmall);
-    document.getElementById('content').prepend(div); // adds to the START of the list rather than the end (most recent post first)
+    contentDiv.prepend(div); // adds to the START of the list rather than the end (most recent post first)
 };
