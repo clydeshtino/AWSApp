@@ -6,8 +6,7 @@ Team 4's app consists of a CDK (Cloud Development Kit) project written in typesc
 We designed our application with a public-private split using AWS resources to ensure scalability and security.
 
 ### Public Layer
-- **S3**: Serves our static front-end page files.
-- **Cloudfront**: Acts as a Content Delivery Network (CDN), distributes our static files that are hosted by S3.
+- **Cloudfront**: Acts as a Content Delivery Network (CDN) and distributes the static files that our S3 Bucket hosts.
 - **API Gateway**: Manages public HTTP endpoints, handling requests like:
   - `GET` to retrieve posts.
   - `POST` to create a new post.
@@ -15,6 +14,7 @@ We designed our application with a public-private split using AWS resources to e
 
 
 ### Private Layer
+- **S3 Bucket**: Serves our static front-end page files.
 - **SQS**: Acts as a message queue for asynchronous processing of `POST` requests.
 - **Lambda #2**: Provides database functions for write-only.
 - **Lambda #3**: Consumes messages from the SQS queue and writes data to DynamoDB.
