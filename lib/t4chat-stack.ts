@@ -133,7 +133,7 @@ export class Team4ProjectStack extends cdk.Stack {
         handler: chatServiceLambdaFunction,
         proxy: false,
         defaultCorsPreflightOptions: {
-          allowOrigins: ['https://d2h8kqlsohfm1u.cloudfront.net'],
+          allowOrigins: ['https://d1l6jq484ihqt0.cloudfront.net'],
           allowMethods: ['GET', 'POST', 'OPTIONS'],
       }});
 
@@ -145,7 +145,7 @@ export class Team4ProjectStack extends cdk.Stack {
           {
             statusCode: '200',
             responseParameters: {
-              'method.response.header.Access-Control-Allow-Origin': `'https://d2h8kqlsohfm1u.cloudfront.net'`,
+              'method.response.header.Access-Control-Allow-Origin': `'https://d1l6jq484ihqt0.cloudfront.net'`,
               'method.response.header.Access-Control-Allow-Methods': `'OPTIONS,GET,POST'`,
               'method.response.header.Access-Control-Allow-Headers': `'Content-Type, Authorization, X-Api-Key, X-Amz-Date, X-Amz-Security-Token, X-Amz-User-Agent'`,
             },
@@ -156,7 +156,7 @@ export class Team4ProjectStack extends cdk.Stack {
           {
             statusCode: '400',
             responseParameters: {
-              'method.response.header.Access-Control-Allow-Origin': `'https://d2h8kqlsohfm1u.cloudfront.net'`,
+              'method.response.header.Access-Control-Allow-Origin': `'https://d1l6jq484ihqt0.cloudfront.net'`,
               'method.response.header.Access-Control-Allow-Methods': `'OPTIONS,GET,POST'`,
               'method.response.header.Access-Control-Allow-Headers': `'Content-Type, Authorization, X-Api-Key, X-Amz-Date, X-Amz-Security-Token, X-Amz-User-Agent'`,
             },
@@ -167,7 +167,7 @@ export class Team4ProjectStack extends cdk.Stack {
           {
             statusCode: '500',
             responseParameters: {
-              'method.response.header.Access-Control-Allow-Origin': `'https://d2h8kqlsohfm1u.cloudfront.net'`,
+              'method.response.header.Access-Control-Allow-Origin': `'https://d1l6jq484ihqt0.cloudfront.net'`,
               'method.response.header.Access-Control-Allow-Methods': `'OPTIONS,GET,POST'`,
               'method.response.header.Access-Control-Allow-Headers': `'Content-Type, Authorization, X-Api-Key, X-Amz-Date, X-Amz-Security-Token, X-Amz-User-Agent'`,
             },

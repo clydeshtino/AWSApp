@@ -1,3 +1,4 @@
+
 document.addEventListener('DOMContentLoaded', () => {
     const form = document.getElementById('form');
     const titleInput = document.getElementById('title');
@@ -19,7 +20,7 @@ document.addEventListener('DOMContentLoaded', () => {
             message,
         }
         try {
-            const response = await fetch('https://p3subata90.execute-api.us-east-1.amazonaws.com/prod/message', {
+            const response = await fetch('https://n5aaxkxy5h.execute-api.us-east-1.amazonaws.com/prod/message', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -43,7 +44,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const fetchPosts = async () => {
         try {
-            const response = await fetch('https://p3subata90.execute-api.us-east-1.amazonaws.com/prod/message', {
+            const response = await fetch('https://n5aaxkxy5h.execute-api.us-east-1.amazonaws.com/prod/message', {
                 method: 'GET',
                 headers: {
                     'Content-Type': 'application/json',
