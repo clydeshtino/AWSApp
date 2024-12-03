@@ -84,26 +84,29 @@ document.addEventListener('DOMContentLoaded', () => {
                     contentDiv.innerHTML = '<p>No posts available.</p>';
                     return;
                 }
-
-                //const list = document.createElement('ol');
-
+                console.log('Posts:', posts);
                 posts.forEach((post) => {
-                    // const item = document.createElement('li');
-                    // const title = document.createElement('h3');
-                    // title.textContent = post.title;
-                    // const messagePg = document.createElement('p');
-                    // messagePg.textContent = post.message;
-                    // const timestampSmall = document.createElement('small');
-                    // timestampSmall.textContent = new Date(post.timestamp).toLocaleString();
-
-                    // item.appendChild(title);
-                    // item.appendChild(messagePg);
-                    // item.appendChild(timestampSmall);
-                    // list.appendChild(item);
-                    StephenAddPostFunc(post);
+                const div = document.createElement('div');
+                div.classList.add('messages');
+            
+                const title = document.createElement('div');
+                title.textContent = post.title;
+                // title.textContent = document.querySelector(post.title).value;
+                title.classList.add('messageTitle');
+            
+                const body = document.createElement('div');
+                body.textContent = post.message
+                body.classList.add('messageBody');
+            
+                const timestampSmall = document.createElement('small');
+                timestampSmall.textContent = new Date(post.timestamp).toLocaleString();
+                timestampSmall.classList.add('messageBody');
+                
+                div.appendChild(title);
+                div.appendChild(body);
+                div.appendChild(timestampSmall);
+                contentDiv.prepend(div);
                 });
-
-                //contentDiv.appendChild(list);
             };
             fetchPosts(); // fetch posts when page is loaded
         })
@@ -112,26 +115,3 @@ document.addEventListener('DOMContentLoaded', () => {
         });
 });
 
-StephenAddPostFunc = (post) => {
-    //event.preventDefault(); // Prevent the form from submitting
-
-    const div = document.createElement('div');
-    div.classList.add('messages');
-
-    const title = document.createElement('div');
-    title.textContent = document.querySelector(post.title).value;
-    title.classList.add('messageTitle');
-
-    const body = document.createElement('div');
-    body.textContent = document.querySelector(post.message).value;
-    body.classList.add('messageBody');
-
-    const timestampSmall = document.createElement('small');
-    timestampSmall.textContent = new Date(post.timestamp).toLocaleString();
-    timestampSmall.classList.add('messageBody');
-    
-    div.appendChild(title);
-    div.appendChild(body);
-    div.appendChild(timestampSmall);
-    contentDiv.prepend(div); // adds to the START of the list rather than the end (most recent post first)
-};
