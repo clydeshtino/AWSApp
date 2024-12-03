@@ -10,6 +10,7 @@ import * as dynamodb from 'aws-cdk-lib/aws-dynamodb';
 import * as cloudfront from 'aws-cdk-lib/aws-cloudfront';
 import * as cloudfront_origins from 'aws-cdk-lib/aws-cloudfront-origins';
 import * as path from "path";
+import { HttpLambdaIntegration } from '@aws-cdk/aws-apigatewayv2-integrations-alpha';
 import { CfnOutput, Duration, RemovalPolicy, Stack } from 'aws-cdk-lib';
 import { NodejsFunction } from 'aws-cdk-lib/aws-lambda-nodejs';
 import { Construct } from 'constructs';
@@ -130,106 +131,24 @@ export class Team4ProjectStack extends cdk.Stack {
       });
       new CfnOutput(this, 'ChatMessaqeQueueUrl', { value: chatMessageQueue.queueUrl });
        // Define ChatServiceApi API Gateway resource
-      const chatServiceApi = new apigateway.LambdaRestApi(this, 'ChatServiceApi', {
+       const chatServiceApi = new apigateway.LambdaRestApi(this, 'ChatServiceApi', {
         handler: chatServiceLambdaFunction,
-        proxy: false,
+        proxy: true,
         defaultCorsPreflightOptions: {
-          allowOrigins: ['https://d1l6jq484ihqt0.cloudfront.net'],
-          allowMethods: ['GET', 'POST', 'OPTIONS'],
-          allowHeaders: ['Content-Type', 'Authorization', 'X-Api-Key', 'X-Amz-Date', 'X-Amz-Security-Token', 'X-Amz-User-Agent'],
-      }});
-
-      // Define the '/message' resource on ChatService API
-      const chatServiceApiPostResource = chatServiceApi.root.addResource('message');
-      const lambdaIntegration = new apigateway.LambdaIntegration(chatServiceLambdaFunction, {
-        proxy: false,
-        integrationResponses: [
-          {
-            statusCode: '200',
-            responseParameters: {
-              'method.response.header.Access-Control-Allow-Origin': `'https://d1l6jq484ihqt0.cloudfront.net'`,
-              'method.response.header.Access-Control-Allow-Methods': `'OPTIONS,GET,POST'`,
-              'method.response.header.Access-Control-Allow-Headers': `'Content-Type, Authorization, X-Api-Key, X-Amz-Date, X-Amz-Security-Token, X-Amz-User-Agent'`,
-            },
-            responseTemplates: {
-              'application/json': '',
-            },
-          },
-          {
-            statusCode: '400',
-            responseParameters: {
-              'method.response.header.Access-Control-Allow-Origin': `'https://d1l6jq484ihqt0.cloudfront.net'`,
-              'method.response.header.Access-Control-Allow-Methods': `'OPTIONS,GET,POST'`,
-              'method.response.header.Access-Control-Allow-Headers': `'Content-Type, Authorization, X-Api-Key, X-Amz-Date, X-Amz-Security-Token, X-Amz-User-Agent'`,
-            },
-            responseTemplates: {
-              'application/json': '',
-            },
-          },
-          {
-            statusCode: '500',
-            responseParameters: {
-              'method.response.header.Access-Control-Allow-Origin': `'https://d1l6jq484ihqt0.cloudfront.net'`,
-              'method.response.header.Access-Control-Allow-Methods': `'OPTIONS,GET,POST'`,
-              'method.response.header.Access-Control-Allow-Headers': `'Content-Type, Authorization, X-Api-Key, X-Amz-Date, X-Amz-Security-Token, X-Amz-User-Agent'`,
-            },
-            responseTemplates: {
-              'application/json': '',
-            },
-          },
-        ],
-        requestTemplates: {
-          'application/json': '{"statusCode": "200"}',
+          allowOrigins: ['*'],
+          allowMethods: ['OPTIONS', 'GET', 'POST'],
+          allowHeaders: [
+            'Content-Type',
+            'Authorization',
+            'X-Api-Key',
+            'X-Amz-Date',
+            'X-Amz-Security-Token',
+            'X-Amz-User-Agent',
+          ],
         },
       });
-      chatServiceApiPostResource.addMethod('GET', lambdaIntegration, {
-        methodResponses: [
-          {
-            statusCode: '200',
-            responseParameters: {
-              'method.response.header.Access-Control-Allow-Origin': true,
-              'method.response.header.Access-Control-Allow-Methods': true,
-              'method.response.header.Access-Control-Allow-Headers': true, 
-            },
-          },
-          {
-            statusCode: '500',
-            responseParameters: {
-              'method.response.header.Access-Control-Allow-Origin': true,
-              'method.response.header.Access-Control-Allow-Methods': true,
-              'method.response.header.Access-Control-Allow-Headers': true, 
-            },
-          },
-        ],
-      });
-      chatServiceApiPostResource.addMethod('POST', lambdaIntegration, {
-        methodResponses: [
-          {
-            statusCode: '200',
-            responseParameters: {
-              'method.response.header.Access-Control-Allow-Origin': true,
-              'method.response.header.Access-Control-Allow-Methods': true,
-              'method.response.header.Access-Control-Allow-Headers': true, 
-            },
-          },
-          {
-            statusCode: '400',
-            responseParameters: {
-              'method.response.header.Access-Control-Allow-Origin': true,
-              'method.response.header.Access-Control-Allow-Methods': true,
-              'method.response.header.Access-Control-Allow-Headers': true, 
-            },
-          },
-          {
-            statusCode: '500',
-            responseParameters: {
-              'method.response.header.Access-Control-Allow-Origin': true,
-              'method.response.header.Access-Control-Allow-Methods': true,
-              'method.response.header.Access-Control-Allow-Headers': true, 
-            },
-          },
-        ],
-      });
+      // Define the '/message' resource on ChatService API
+      // const chatServiceApiPostResource = chatServiceApi.root.addResource('message');
     new CfnOutput(this, 'APIEndpoint', { value: chatServiceApi.url });
     messagesTable.grantReadWriteData(chatServiceLambdaFunction);
     chatMessageQueue.grantSendMessages(chatServiceLambdaFunction);

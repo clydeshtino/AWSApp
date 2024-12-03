@@ -13,19 +13,21 @@ export const handler: APIGatewayProxyHandler = async (event) => {
 
     const httpMethod = event.httpMethod;
     const path = event.path;
+    console.log(`event: ${JSON.stringify(event)}`);
+    console.log(`event: ${event}`);
     console.log(`httpMethod: ${httpMethod}, path: ${path}`);
 
     try {
-        if (httpMethod === 'POST' && path === '/message') {
+        if (httpMethod === 'POST') {
             return await handleCreatePost(event);
-        } else if (httpMethod === 'GET' && path === '/message') {
+        } else if (httpMethod === 'GET') {
             return await handleGetPosts(event);
         } else {
             return {
                 statusCode: 400,
                 headers: {
                     'Content-Type': 'application/json',
-                    'Access-Control-Allow-Origin': 'https://d1l6jq484ihqt0.cloudfront.net',
+                    'Access-Control-Allow-Origin': '*',
                     'Access-Control-Allow-Methods': 'OPTIONS,GET,POST',
                     'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Api-Key, X-Amz-Date, X-Amz-Security-Token, X-Amz-User-Agent',
                 },
@@ -38,7 +40,7 @@ export const handler: APIGatewayProxyHandler = async (event) => {
             statusCode: 500,
             headers: {
                 'Content-Type': 'application/json',
-                'Access-Control-Allow-Origin': 'https://d1l6jq484ihqt0.cloudfront.net',
+                'Access-Control-Allow-Origin': '*',
                 'Access-Control-Allow-Methods': 'OPTIONS,GET,POST',
                 'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Api-Key, X-Amz-Date, X-Amz-Security-Token, X-Amz-User-Agent',
             },
@@ -58,7 +60,7 @@ const handleCreatePost = async (event: any) => {
                 statusCode: 400,
                 headers: {
                     'Content-Type': 'application/json',
-                    'Access-Control-Allow-Origin': 'https://d1l6jq484ihqt0.cloudfront.net',
+                    'Access-Control-Allow-Origin': '*',
                     'Access-Control-Allow-Methods': 'OPTIONS,GET,POST',
                     'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Api-Key, X-Amz-Date, X-Amz-Security-Token, X-Amz-User-Agent',
                 },
@@ -90,7 +92,7 @@ const handleCreatePost = async (event: any) => {
             statusCode: 200,
             headers: {
                 'Content-Type': 'application/json',
-                'Access-Control-Allow-Origin': 'https://d1l6jq484ihqt0.cloudfront.net',
+                'Access-Control-Allow-Origin': '*',
                 'Access-Control-Allow-Methods': 'OPTIONS,GET,POST',
                 'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Api-Key, X-Amz-Date, X-Amz-Security-Token, X-Amz-User-Agent',
             },
@@ -102,7 +104,7 @@ const handleCreatePost = async (event: any) => {
             statusCode: 500,
             headers: {
                 'Content-Type': 'application/json',
-                'Access-Control-Allow-Origin': 'https://d1l6jq484ihqt0.cloudfront.net',
+                'Access-Control-Allow-Origin': '*',
                 'Access-Control-Allow-Methods': 'OPTIONS,GET,POST',
                 'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Api-Key, X-Amz-Date, X-Amz-Security-Token, X-Amz-User-Agent',
             },
@@ -125,7 +127,7 @@ const handleGetPosts = async (event: any) => {
             statusCode: 200,
             headers: {
                 'Content-Type': 'application/json',
-                'Access-Control-Allow-Origin': 'https://d1l6jq484ihqt0.cloudfront.net',
+                'Access-Control-Allow-Origin': '*',
                 'Access-Control-Allow-Methods': 'OPTIONS,GET,POST',
                 'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Api-Key, X-Amz-Date, X-Amz-Security-Token, X-Amz-User-Agent',
             },
@@ -137,7 +139,7 @@ const handleGetPosts = async (event: any) => {
             statusCode: 500,
             headers: {
                 'Content-Type': 'application/json',
-                'Access-Control-Allow-Origin': 'https://d1l6jq484ihqt0.cloudfront.net',
+                'Access-Control-Allow-Origin': '*',
                 'Access-Control-Allow-Methods': 'OPTIONS,GET,POST',
                 'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Api-Key, X-Amz-Date, X-Amz-Security-Token, X-Amz-User-Agent',
             },
