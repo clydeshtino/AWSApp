@@ -95,14 +95,8 @@ export class Team4ProjectStack extends cdk.Stack {
     // Content bucket
     const siteBucket = new s3.Bucket(this, 'team4sitebucket', {
       bucketName: 'team4sitebucket',
-      publicReadAccess: true,
-      // blockPublicAccess: s3.BlockPublicAccess.BLOCK_ALL,
-      blockPublicAccess: {
-        blockPublicPolicy: false,
-        blockPublicAcls: false,
-        ignorePublicAcls: false,
-        restrictPublicBuckets: false,
-      },
+      publicReadAccess: false,
+      blockPublicAccess: s3.BlockPublicAccess.BLOCK_ALL,
       removalPolicy: RemovalPolicy.DESTROY,
       autoDeleteObjects: true,
     });
