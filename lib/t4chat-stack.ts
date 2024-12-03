@@ -144,6 +144,8 @@ export class Team4ProjectStack extends cdk.Stack {
       serviceApiUrl: chatServiceApi.url
     }
 
+    // bug: aws guesses the mime type of these files incorrectly :/
+    // https://github.com/aws/aws-cdk/issues/11890
     new s3deploy.BucketDeployment(this, 'DeployWithInvalidation', {
       sources: [
         s3deploy.Source.asset(path.join(__dirname, '../site-contents')),
