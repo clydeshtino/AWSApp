@@ -67,31 +67,56 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Function to display posts in the UI
     const displayPosts = (posts) => {
-        contentDiv.innerHTML = ''; // Clear existing content
+        StephenAddPostFunc(posts);
+        // contentDiv.innerHTML = ''; // Clear existing content
 
-        if (posts.length === 0) {
-            contentDiv.innerHTML = '<p>No posts available.</p>';
-            return;
-        }
+        // if (posts.length === 0) {
+        //     contentDiv.innerHTML = '<p>No posts available.</p>';
+        //     return;
+        // }
 
-        const list = document.createElement('ol');
+        // const list = document.createElement('ol');
 
-        posts.forEach((post) => {
-            const item = document.createElement('li');
-            const title = document.createElement('h3');
-            title.textContent = post.title;
-            const messagePg = document.createElement('p');
-            messagePg.textContent = post.message;
-            const timestampSmall = document.createElement('small');
-            timestampSmall.textContent = new Date(post.timestamp).toLocaleString();
+        // posts.forEach((post) => {
+        //     const item = document.createElement('li');
+        //     const title = document.createElement('h3');
+        //     title.textContent = post.title;
+        //     const messagePg = document.createElement('p');
+        //     messagePg.textContent = post.message;
+        //     const timestampSmall = document.createElement('small');
+        //     timestampSmall.textContent = new Date(post.timestamp).toLocaleString();
 
-            item.appendChild(title);
-            item.appendChild(messagePg);
-            item.appendChild(timestampSmall);
-            list.appendChild(item);
-        });
+        //     item.appendChild(title);
+        //     item.appendChild(messagePg);
+        //     item.appendChild(timestampSmall);
+        //     list.appendChild(item);
+        // });
 
-        contentDiv.appendChild(list);
+        // contentDiv.appendChild(list);
     };
     fetchPosts(); // fetch posts when page is loaded
 });
+
+StephenAddPostFunc = (posts) => {
+    //event.preventDefault(); // Prevent the form from submitting
+
+    const div = document.createElement('div');
+    div.classList.add('messages');
+
+    const title = document.createElement('div');
+    title.textContent = document.querySelector(post.title).value;
+    title.classList.add('messageTitle');
+
+    const body = document.createElement('div');
+    body.textContent = document.querySelector(post.message).value;
+    body.classList.add('messageBody');
+
+    const timestampSmall = document.createElement('small');
+    timestampSmall.textContent = new Date(post.timestamp).toLocaleString();
+    timestampSmall.classList.add('messageBody');
+    
+    div.appendChild(title);
+    div.appendChild(body);
+    div.appendChild(timestampSmall);
+    document.getElementById('content').prepend(div); // adds to the START of the list rather than the end (most recent post first)
+};
