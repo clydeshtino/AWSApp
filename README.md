@@ -1,9 +1,9 @@
-# Team 4 Project : Chat MVP
+# Team 4 Project: Chat MVP
 
-Team 4's app consists of a CDK (Cloud Development Kit) project written in typescript. The app is a chat app where users can post whatever messages they wish. We utilized key AWS resources to create this app and ensure functionality.
+Team 4's app consists of a CDK (Cloud Development Kit) project written in typescript. It is a chat app where users can post whatever messages they wish. We utilized key AWS resources to create this app and ensure its functionality.
 
 ## Project Architecture
-We designed our application with public-private split using AWS resources to ensure scalability and security.
+We designed our application with a public-private split using AWS resources to ensure scalability and security.
 
 ### Public Layer
 - **S3**: Serves our static front-end page files.
@@ -18,7 +18,7 @@ We designed our application with public-private split using AWS resources to ens
 - **SQS**: Acts as a message queue for asynchronous processing of `POST` requests.
 - **Lambda #2**: Provides database functions for write-only.
 - **Lambda #3**: Consumes messages from the SQS queue and writes data to DynamoDB.
-- **DynamoDB**: Serves as the applications primary NoSQL Database.
+- **DynamoDB**: Serves as the application's primary NoSQL Database.
 
 
 ## Workflow
@@ -33,13 +33,15 @@ We designed our application with public-private split using AWS resources to ens
 
 
 ## Run the application
-Assuming that your AWS CLI is already configured run:
+Assuming that your AWS CLI is already configured, run the following:
+
         npm run install
         cdk deploy
 
             
 
 To kill the app and all resources run:
+
         cdk destroy
 
 
