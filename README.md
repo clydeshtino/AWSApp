@@ -1,14 +1,38 @@
-# Welcome to your CDK TypeScript project
+# Team 4 Project : Chat
 
-This is a blank project for CDK development with TypeScript.
+Team 4's app consists of a CDK (Cloud Development Kit) project written in typescript. The app is a chat app where users can post whatever messages they wish. We utilized key AWS resources to create this app and ensure functionality.
 
-The `cdk.json` file tells the CDK Toolkit how to execute your app.
+# Project Architecture
+We designed our application with public-private split using AWS resources to ensure scalability and security.
 
-## Useful commands
+### Public Layer
+- **API Gateway**: Manages public HTTP endpoints, handling requests like:
+  - `GET` to retrieve posts.
+  - `POST` to create a new post.
+- **Lambda #1**: Serves as the backend for the API Gateway, exposing public endpoints.
 
-* `npm run build`   compile typescript to js
-* `npm run watch`   watch for changes and compile
-* `npm run test`    perform the jest unit tests
-* `npx cdk deploy`  deploy this stack to your default AWS account/region
-* `npx cdk diff`    compare deployed stack with current state
-* `npx cdk synth`   emits the synthesized CloudFormation template
+### Private Layer
+- **SQS**: Acts as a message queue for asynchronous processing of `POST` and `PUT` requests.
+- **Lambda #2**: Provides database functions for reads and writes.
+- **Lambda #3**: Consumes messages from the SQS queue and writes data to DynamoDB.
+- **DynamoDB**: A NoSQL database for storing application data, using a write-through cache strategy for optimal performance.
+
+## Workflow
+1. **Frontend**: Sends requests to the API Gateway.
+2. **Public Processing**: API Gateway triggers Lambda #1 for public endpoint logic.
+3. **Private Processing**:
+   - Lambda #1 sends requests to SQS for further processing.
+   - Lambda #2 handles database queries when necessary.
+   - Lambda #3 processes messages from SQS and writes to DynamoDB.
+   
+
+<img src="https://github.com/clydeshtino/AWSApp/blob/main/misc/diagram.png" width="800" />
+
+## Run the application
+Assuming that your AWS CLI is already configured, run:
+        npm run install
+        cdk deploy
+
+To kill the app and all resources run:
+        cdk destroy
+
