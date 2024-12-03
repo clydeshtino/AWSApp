@@ -130,22 +130,108 @@ export class Team4ProjectStack extends cdk.Stack {
           DYNAMODB_TABLE: messagesTable.tableName,
         }
       });
-
+      new CfnOutput(this, 'ChatMessaqeQueueUrl', { value: chatMessageQueue.queueUrl });
        // Define ChatServiceApi API Gateway resource
       const chatServiceApi = new apigateway.LambdaRestApi(this, 'ChatServiceApi', {
         handler: chatServiceLambdaFunction,
         proxy: false,
         defaultCorsPreflightOptions: {
           allowOrigins: ['https://d2h8kqlsohfm1u.cloudfront.net'],
-          allowMethods: ['GET', 'POST'],
+          allowMethods: ['GET', 'POST', 'OPTIONS'],
       }});
-        
+
       // Define the '/message' resource on ChatService API
       const chatServiceApiPostResource = chatServiceApi.root.addResource('message');
-      chatServiceApiPostResource.addMethod('GET');
-      chatServiceApiPostResource.addMethod('POST');
-      new CfnOutput(this, 'APIEndpoint', { value: chatServiceApi.url });
-
+      const lambdaIntegration = new apigateway.LambdaIntegration(chatServiceLambdaFunction, {
+        proxy: false,
+        integrationResponses: [
+          {
+            statusCode: '200',
+            responseParameters: {
+              'method.response.header.Access-Control-Allow-Origin': `'https://d2h8kqlsohfm1u.cloudfront.net'`,
+              'method.response.header.Access-Control-Allow-Methods': `'OPTIONS,GET,POST'`,
+              'method.response.header.Access-Control-Allow-Headers': `'Content-Type, Authorization, X-Api-Key, X-Amz-Date, X-Amz-Security-Token, X-Amz-User-Agent'`,
+            },
+            responseTemplates: {
+              'application/json': '',
+            },
+          },
+          {
+            statusCode: '400',
+            responseParameters: {
+              'method.response.header.Access-Control-Allow-Origin': `'https://d2h8kqlsohfm1u.cloudfront.net'`,
+              'method.response.header.Access-Control-Allow-Methods': `'OPTIONS,GET,POST'`,
+              'method.response.header.Access-Control-Allow-Headers': `'Content-Type, Authorization, X-Api-Key, X-Amz-Date, X-Amz-Security-Token, X-Amz-User-Agent'`,
+            },
+            responseTemplates: {
+              'application/json': '',
+            },
+          },
+          {
+            statusCode: '500',
+            responseParameters: {
+              'method.response.header.Access-Control-Allow-Origin': `'https://d2h8kqlsohfm1u.cloudfront.net'`,
+              'method.response.header.Access-Control-Allow-Methods': `'OPTIONS,GET,POST'`,
+              'method.response.header.Access-Control-Allow-Headers': `'Content-Type, Authorization, X-Api-Key, X-Amz-Date, X-Amz-Security-Token, X-Amz-User-Agent'`,
+            },
+            responseTemplates: {
+              'application/json': '',
+            },
+          },
+        ],
+        requestTemplates: {
+          'application/json': '{"statusCode": "200"}',
+        },
+      });
+      chatServiceApiPostResource.addMethod('GET', lambdaIntegration, {
+        methodResponses: [
+          {
+            statusCode: '200',
+            responseParameters: {
+              'method.response.header.Access-Control-Allow-Origin': true,
+              'method.response.header.Access-Control-Allow-Methods': true,
+              'method.response.header.Access-Control-Allow-Headers': true, 
+            },
+          },
+          {
+            statusCode: '500',
+            responseParameters: {
+              'method.response.header.Access-Control-Allow-Origin': true,
+              'method.response.header.Access-Control-Allow-Methods': true,
+              'method.response.header.Access-Control-Allow-Headers': true, 
+            },
+          },
+        ],
+      });
+      chatServiceApiPostResource.addMethod('POST', lambdaIntegration, {
+        methodResponses: [
+          {
+            statusCode: '200',
+            responseParameters: {
+              'method.response.header.Access-Control-Allow-Origin': true,
+              'method.response.header.Access-Control-Allow-Methods': true,
+              'method.response.header.Access-Control-Allow-Headers': true, 
+            },
+          },
+          {
+            statusCode: '400',
+            responseParameters: {
+              'method.response.header.Access-Control-Allow-Origin': true,
+              'method.response.header.Access-Control-Allow-Methods': true,
+              'method.response.header.Access-Control-Allow-Headers': true, 
+            },
+          },
+          {
+            statusCode: '500',
+            responseParameters: {
+              'method.response.header.Access-Control-Allow-Origin': true,
+              'method.response.header.Access-Control-Allow-Methods': true,
+              'method.response.header.Access-Control-Allow-Headers': true, 
+            },
+          },
+        ],
+      });
+    new CfnOutput(this, 'APIEndpoint', { value: chatServiceApi.url });
     /*
      * pull worker lambda
      */
@@ -171,5 +257,6 @@ export class Team4ProjectStack extends cdk.Stack {
     });
     dbWrapperLambdaFunction.grantInvoke(chatPullWorkerLambdaFunction);
     chatMessageQueue.grantConsumeMessages(chatPullWorkerLambdaFunction);
+    chatMessageQueue.grantSendMessages(chatServiceLambdaFunction);
   }
 }

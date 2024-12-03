@@ -66,7 +66,9 @@ const handleCreatePost = async (event: any) => {
             statusCode: 200,
             headers: {
                 'Content-Type': 'application/json',
-                'Access-Control-Allow-Origin': 'https://d2h8kqlsohfm1u.cloudfront.net/',
+                'Access-Control-Allow-Origin': 'https://d2h8kqlsohfm1u.cloudfront.net',
+                'Access-Control-Allow-Methods': 'OPTIONS,GET,POST',
+                'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Api-Key, X-Amz-Date, X-Amz-Security-Token, X-Amz-User-Agent',
             },
             body: JSON.stringify({ message: 'Post queued successfully', postId: post.id }),
         };
@@ -93,7 +95,9 @@ const handleGetPosts = async (event: any) => {
             statusCode: 200,
             headers: {
                 'Content-Type': 'application/json',
-                'Access-Control-Allow-Origin': 'https://d2h8kqlsohfm1u.cloudfront.net/',
+                'Access-Control-Allow-Origin': 'https://d2h8kqlsohfm1u.cloudfront.net',
+                'Access-Control-Allow-Methods': 'OPTIONS,GET,POST',
+                'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Api-Key, X-Amz-Date, X-Amz-Security-Token, X-Amz-User-Agent',
             },
             body: JSON.stringify({ posts }),
         };
