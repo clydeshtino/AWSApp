@@ -121,20 +121,31 @@ const InvokeDBWrapper = async (event: any) => {
         };
         const params = {
             FunctionName: WRAPPER_LAMBDA_NAME, 
-            InvocationType: 'Event',
+            InvocationType: 'RequestResponse',
             Payload: JSON.stringify(payload),
         };
         const result = await lambda.invoke(params).promise();
         console.log(`Invoked lambda ${process.env.WRAPPER_LAMBDA_NAME!} with result ${JSON.stringify(result)}`);
+        const responsePayload = JSON.parse(result.Payload as string);
+        console.log(`Response payload: ${JSON.stringify(responsePayload)}`);
+        let headers = responsePayload.headers;
+        if (typeof headers === 'string') {
+            headers = JSON.parse(headers);
+        }
+        headers = {
+            ...headers,
+            'Access-Control-Allow-Origin': '*',
+            'Access-Control-Allow-Methods': 'OPTIONS,GET,POST',
+            'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Api-Key, X-Amz-Date, X-Amz-Security-Token, X-Amz-User-Agent',
+        }
+        let body = responsePayload.body;
+        if (typeof body === 'string') {
+            body = JSON.parse(body);
+        }
         return {
-            statusCode: 200,
-            headers: {
-                'Content-Type': 'application/json',
-                'Access-Control-Allow-Origin': '*',
-                'Access-Control-Allow-Methods': 'OPTIONS,GET,POST',
-                'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Api-Key, X-Amz-Date, X-Amz-Security-Token, X-Amz-User-Agent',
-            },
-            body: JSON.stringify({ message: `Invoked lambda ${process.env.WRAPPER_LAMBDA_NAME!} with result ${JSON.stringify(result)}` }),
+            statusCode: responsePayload.statusCode,
+            headers: headers,
+            body: JSON.stringify(body),
         };
     } catch (error) {
         console.error('Error retrieving posts:', error);

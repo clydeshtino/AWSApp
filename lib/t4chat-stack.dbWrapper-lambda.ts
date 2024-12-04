@@ -79,6 +79,12 @@ async function handleCreatePost(message: Message) {
       console.warn(`Message with ID ${message.id} already exists`);
       return {
         statusCode: 409,
+        headers: {
+          'Content-Type': 'application/json',
+          'Access-Control-Allow-Origin': '*',
+          'Access-Control-Allow-Methods': 'OPTIONS,GET,POST',
+          'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Api-Key, X-Amz-Date, X-Amz-Security-Token, X-Amz-User-Agent',
+        },
         body: JSON.stringify(`Message with ID ${message.id} already exists`),
       };
     } else {
@@ -94,6 +100,7 @@ async function handleGetPosts(event: any) {
     };
     const data = await dynamoDb.scan(params).promise();
     const posts = data.Items || [];
+    posts.sort((a: any, b: any) => (a.timestamp < b.timestamp ? -1 : 1));
     console.log('Retrieved posts:', JSON.stringify(posts, null, 2));
     return {
       statusCode: 200,

@@ -63,8 +63,14 @@ document.addEventListener('DOMContentLoaded', () => {
                             'Content-Type': 'application/json',
                         },
                     });
+                    console.log('Response:', response);
                     const data = await response.json();
-
+                    let responseBody;
+                    if(data.body) {
+                        responseBody = JSON.parse(data.body);
+                    } else {
+                        responseBody = data;
+                    }
                     if (data.posts) {
                         displayPosts(data.posts);
                     } else {
