@@ -21,25 +21,39 @@ export const handler = async (event: any): Promise<APIGatewayProxyResult> => {
       console.error('Invalid message structure:', JSON.stringify(message, null, 2));
       return {
         statusCode: 400,
-        body: JSON.stringify('Invalid message structure'),
+        headers: {
+          'Content-Type': 'application/json',
+          'Access-Control-Allow-Origin': '*',
+          'Access-Control-Allow-Methods': 'OPTIONS,GET,POST',
+          'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Api-Key, X-Amz-Date, X-Amz-Security-Token, X-Amz-User-Agent',
+        },
+        body: JSON.stringify({ message: 'Invalid message structure'}),
       };
     }
     const result = await handleCreatePost(message);
     return {
       statusCode: 200,
-      body: JSON.stringify(`Post created successfully: ${JSON.stringify(result)}`),
+      headers: {
+        'Content-Type': 'application/json',
+        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Methods': 'OPTIONS,GET,POST',
+        'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Api-Key, X-Amz-Date, X-Amz-Security-Token, X-Amz-User-Agent',
+      },
+      body: JSON.stringify({ message: `Post with id ${message.id} created successfully: ${JSON.stringify(result)}`}),
     };
   } else if (event.eventType === 'get-posts') {
-    const result = await handleGetPosts(event);
-    return {
-      statusCode: 200,
-      body: JSON.stringify(result),
-    };
+    return await handleGetPosts(event);
   } else {
     console.error('Invalid event type:', event.eventType);
     return {
       statusCode: 400,
-      body: JSON.stringify('Invalid event type'),
+      headers: {
+        'Content-Type': 'application/json',
+        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Methods': 'OPTIONS,GET,POST',
+        'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Api-Key, X-Amz-Date, X-Amz-Security-Token, X-Amz-User-Agent',
+      },
+      body: JSON.stringify({ message:'Invalid event type'}),
     };
   }
 };
@@ -73,17 +87,35 @@ async function handleCreatePost(message: Message) {
     }
   }
 }
-
 async function handleGetPosts(event: any) {
   try {
-  const params = {
-    TableName: DYNAMODB_TABLE,
-  };
-  const result = await dynamoDb.scan(params).promise();
-  console.log('Found posts:', JSON.stringify(result, null, 2));
-  return result.Items;
+    const params = {
+      TableName: DYNAMODB_TABLE,
+    };
+    const data = await dynamoDb.scan(params).promise();
+    const posts = data.Items || [];
+    console.log('Retrieved posts:', JSON.stringify(posts, null, 2));
+    return {
+      statusCode: 200,
+      headers: {
+        'Content-Type': 'application/json',
+        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Methods': 'OPTIONS,GET,POST',
+        'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Api-Key, X-Amz-Date, X-Amz-Security-Token, X-Amz-User-Agent',
+      },
+      body: JSON.stringify({ posts }),
+    };
   } catch (error: any) {
     console.error('Error retrieving posts:', error);
-    throw error;
+    return {
+      statusCode: 500,
+      headers: {
+        'Content-Type': 'application/json',
+        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Methods': 'OPTIONS,GET,POST',
+        'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Api-Key, X-Amz-Date, X-Amz-Security-Token, X-Amz-User-Agent',
+      },
+      body: JSON.stringify({ message: 'Failed to retrieve posts' }),
+    }
   }
 }
