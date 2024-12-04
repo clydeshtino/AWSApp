@@ -1,5 +1,6 @@
 import { SQSEvent, Context, SQSHandler, SQSRecord } from "aws-lambda";
 import AWS = require("aws-sdk");
+import { json } from "stream/consumers";
 
 const lambda = new AWS.Lambda();
 
@@ -16,10 +17,14 @@ export const handler: SQSHandler = async (
 async function processMessageAsync(message: SQSRecord): Promise<any> {
 	try {
 		console.log(`Received message ${message.body}`);
+		const payload = {
+			eventType: "create-post",
+			body: message.body,
+		}
 		const params = {
 			FunctionName: process.env.WRAPPER_LAMBDA_NAME!,
 			InvocationType: 'Event', // asynchronous invocation
-			Payload: message.body, // Pass only the message body
+			Payload: JSON.stringify(payload), // Pass message body and event type to the wrapper lambda
 		};
 		const result = await lambda.invoke(params).promise();
 		console.log(`Invoked lambda ${process.env.WRAPPER_LAMBDA_NAME!} with result ${JSON.stringify(result)}`);
