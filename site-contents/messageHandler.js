@@ -45,7 +45,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     if (response.ok) {
                         alert(`Post with ID ${data.postId} made successfully! `);
                         form.reset();
-                        fetchPosts();
+                        setTimeout(fetchPosts, 2000);
                     } else {
                         alert(`Error: ${data.message}`);
                     }
