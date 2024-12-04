@@ -57,10 +57,11 @@ export class Team4ProjectStack extends cdk.Stack {
       runtime: lambda.Runtime.NODEJS_20_X,
       environment: {
         CHAT_MESSAGE_QUEUE_URL: chatMessageQueue.queueUrl,
-        DYNAMODB_TABLE: messagesTable.tableName,
+        WRAPPER_LAMBDA_NAME: dbWrapperLambdaFunction.functionName,
       }
     });
     new CfnOutput(this, 'ChatMessaqeQueueUrl', { value: chatMessageQueue.queueUrl });
+    dbWrapperLambdaFunction.grantInvoke(chatServiceLambdaFunction);
 
     // Define ChatServiceApi API Gateway resource
     const chatServiceApi = new apigateway.LambdaRestApi(this, 'ChatServiceApi', {
@@ -80,9 +81,7 @@ export class Team4ProjectStack extends cdk.Stack {
       },
     });
     new CfnOutput(this, 'ServiceApiUrl', { value: chatServiceApi.url });
-    messagesTable.grantReadWriteData(chatServiceLambdaFunction);
     chatMessageQueue.grantSendMessages(chatServiceLambdaFunction);
-
     /*
      * front end s3 bucket
      */

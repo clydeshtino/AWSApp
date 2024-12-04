@@ -3,10 +3,10 @@ import * as AWS from 'aws-sdk';
 import { v4 as uuidv4 } from 'uuid';
 
 const sqs = new AWS.SQS();
-const dynamodb = new AWS.DynamoDB.DocumentClient();
+const lambda = new AWS.Lambda();
 
 const CHAT_MESSAGE_QUEUE_URL = process.env.CHAT_MESSAGE_QUEUE_URL || '';
-const DYNAMODB_TABLE = process.env.DYNAMODB_TABLE || '';
+const WRAPPER_LAMBDA_NAME = process.env.WRAPPER_LAMBDA_NAME || '';
 
 export const handler: APIGatewayProxyHandler = async (event) => {
     console.log('Received event:', JSON.stringify(event, null, 2));
@@ -21,7 +21,7 @@ export const handler: APIGatewayProxyHandler = async (event) => {
         if (httpMethod === 'POST') {
             return await handleCreatePost(event);
         } else if (httpMethod === 'GET') {
-            return await handleGetPosts(event);
+            return await InvokeDBWrapper(event);
         } else {
             return {
                 statusCode: 400,
@@ -113,16 +113,19 @@ const handleCreatePost = async (event: any) => {
     }
 };
 
-const handleGetPosts = async (event: any) => {
+const InvokeDBWrapper = async (event: any) => {
     try {
-        const params = {
-            TableName: DYNAMODB_TABLE,
+        const payload = {
+            eventType: 'get-posts',
+            event: event,
         };
-
-        const data = await dynamodb.scan(params).promise();
-
-        const posts = data.Items || [];
-
+        const params = {
+            FunctionName: WRAPPER_LAMBDA_NAME, 
+            InvocationType: 'Event',
+            Payload: JSON.stringify(payload),
+        };
+        const result = await lambda.invoke(params).promise();
+        console.log(`Invoked lambda ${process.env.WRAPPER_LAMBDA_NAME!} with result ${JSON.stringify(result)}`);
         return {
             statusCode: 200,
             headers: {
@@ -131,7 +134,7 @@ const handleGetPosts = async (event: any) => {
                 'Access-Control-Allow-Methods': 'OPTIONS,GET,POST',
                 'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Api-Key, X-Amz-Date, X-Amz-Security-Token, X-Amz-User-Agent',
             },
-            body: JSON.stringify({ posts }),
+            body: JSON.stringify({ message: `Invoked lambda ${process.env.WRAPPER_LAMBDA_NAME!} with result ${JSON.stringify(result)}` }),
         };
     } catch (error) {
         console.error('Error retrieving posts:', error);
