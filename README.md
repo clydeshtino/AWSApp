@@ -20,6 +20,8 @@ We designed our application with a public-private split using AWS resources to e
 - **Lambda #3**: Consumes messages from the SQS queue and writes data to DynamoDB.
 - **DynamoDB**: Serves as the application's primary NoSQL Database.
 
+<img src="https://github.com/clydeshtino/AWSApp/misc/diagram.png" width="800" />  
+
 
 
 
